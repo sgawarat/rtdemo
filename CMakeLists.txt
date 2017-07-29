@@ -12,9 +12,20 @@ add_subdirectory(libs/glad)
 include(CTest)
 enable_testing()
 
-add_executable(rendering_techniques src/main.cpp)
-target_link_libraries(rendering_techniques glfw)
-target_link_libraries(rendering_techniques glad)
+add_executable(rendering_techniques
+    src/main.cpp
+    src/gui.cpp
+    libs/imgui/imgui.cpp
+    libs/imgui/imgui_draw.cpp
+)
+target_include_directories(rendering_techniques PRIVATE
+    libs/imgui
+    ./include
+)
+target_link_libraries(rendering_techniques
+    glad
+    glfw
+)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
