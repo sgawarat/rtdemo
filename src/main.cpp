@@ -26,6 +26,9 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 #endif
+#ifndef NDEBUG
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+#endif
     GLFWwindow* window = glfwCreateWindow(640, 480, "Rendering Techniques Demo", nullptr, nullptr);
     if (!window) {
         std::cout << "failed to glfwCreateWindow\n";
@@ -48,9 +51,14 @@ int main() {
         glfwPollEvents();
 
         gui::new_frame();
+
+        ImGui::Text("hello world");
+
         glViewport(0, 0, 640, 480);
-        glClearColor(1.f, 0.f, 1.f, 1.f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glDisable(GL_SCISSOR_TEST);
+        glClearColor(0.2f, 0.2f, 0.2f, 1.f);
+        glClearDepthf(1.f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         ImGui::Render();
 
         glfwSwapBuffers(window);
