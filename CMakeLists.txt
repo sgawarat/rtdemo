@@ -9,6 +9,10 @@ add_subdirectory(libs/glfw)
 set(GLAD_PROFILE "core" CACHE STRING "" FORCE)
 add_subdirectory(libs/glad)
 
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+add_subdirectory(libs/assimp)
+
 include(CTest)
 enable_testing()
 
@@ -25,6 +29,7 @@ target_include_directories(rendering_techniques PRIVATE
 target_link_libraries(rendering_techniques
     glad
     glfw
+    assimp
 )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

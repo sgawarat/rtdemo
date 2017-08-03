@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <rendering_techniques/stable.hpp>
+#include <rendering_techniques/scene.hpp>
 #include <rendering_techniques/gui.hpp>
 
 namespace {
@@ -18,18 +19,13 @@ int main() {
     }
 
     // create GLFW window
-#ifdef WIN32
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#else
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-#endif
 #ifndef NDEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif
-    GLFWwindow* window = glfwCreateWindow(640, 480, "Rendering Techniques Demo", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1280, 720, "Rendering Techniques Demo", nullptr, nullptr);
     if (!window) {
         std::cout << "failed to glfwCreateWindow\n";
         return EXIT_FAILURE;
@@ -46,6 +42,9 @@ int main() {
     // init GUI
     gui::init(window);
 
+    scene::Scene scene;
+    scene.load();
+
     std::cout << "start main loop\n";
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -54,11 +53,14 @@ int main() {
 
         ImGui::Text("hello world");
 
-        glViewport(0, 0, 640, 480);
+        glViewport(0, 0, 1280, 720);
         glDisable(GL_SCISSOR_TEST);
         glClearColor(0.2f, 0.2f, 0.2f, 1.f);
         glClearDepthf(1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // scene.draw();
+
         ImGui::Render();
 
         glfwSwapBuffers(window);
