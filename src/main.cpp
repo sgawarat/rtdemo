@@ -1,12 +1,15 @@
-#include <iostream>
 #include <cstdlib>
-#include <rendering_techniques/stable.hpp>
-#include <rendering_techniques/scene.hpp>
-#include <rendering_techniques/gui.hpp>
+#include <imgui.h>
+#include <rtdemo/gui.hpp>
+#include <rtdemo/logging.hpp>
+#include <rtdemo/scene/static_scene.hpp>
+#include <rtdemo/tech/forward_shading.hpp>
+
+using namespace rtdemo;
 
 namespace {
 void glfw_error_callback(int, const char* desc) {
-    std::cout << desc << "\n";
+    RT_LOG_DEBUG("GLFW Error: {}", desc);
 }
 } // namespace
 
@@ -14,7 +17,7 @@ int main() {
     // init GLFW
     glfwSetErrorCallback((GLFWerrorfun)glfw_error_callback);
     if (!glfwInit()) {
-        std::cout << "failed to glfwInit\n";
+        RT_LOG_DEBUG("failed to glfwInit");
         return EXIT_FAILURE;
     }
 
@@ -27,7 +30,7 @@ int main() {
 #endif
     GLFWwindow* window = glfwCreateWindow(1280, 720, "Rendering Techniques Demo", nullptr, nullptr);
     if (!window) {
-        std::cout << "failed to glfwCreateWindow\n";
+        RT_LOG_DEBUG("failed to glfwCreateWindow");
         return EXIT_FAILURE;
     }
     glfwMakeContextCurrent(window);
@@ -35,37 +38,46 @@ int main() {
 
     // init GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cout << "failed to gladLoadGLLoader\n";
+        RT_LOG_DEBUG("failed to gladLoadGLLoader");
         return EXIT_FAILURE;
     }
 
-    // init GUI
-    gui::init(window);
+    RT_LOG_DEBUG("start main");
+    {
+        // init GUI
+        gui::init(window);
 
-    scene::Scene scene;
-    scene.load();
+        // init scene
+        // scene::StaticScene scene;
+        // scene.init();
 
-    std::cout << "start main loop\n";
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
+        // // init tech
+        // tech::ForwardShading shading;
+        // shading.init();
 
-        gui::new_frame();
+        while (!glfwWindowShouldClose(window)) {
+            glfwPollEvents();
 
-        ImGui::Text("hello world");
+            gui::new_frame();
 
-        glViewport(0, 0, 1280, 720);
-        glDisable(GL_SCISSOR_TEST);
-        glClearColor(0.2f, 0.2f, 0.2f, 1.f);
-        glClearDepthf(1.f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            ImGui::Text("hello world");
 
-        // scene.draw();
+            glViewport(0, 0, 1280, 720);
+            glDisable(GL_SCISSOR_TEST);
+            glClearColor(0.2f, 0.2f, 0.2f, 1.f);
+            glClearDepthf(1.f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        ImGui::Render();
+            // shading.apply();
+            // scene.apply();
+            // scene.draw();
 
-        glfwSwapBuffers(window);
+            ImGui::Render();
+
+            glfwSwapBuffers(window);
+        }
     }
-    std::cout << "finish main loop\n";
+    RT_LOG_DEBUG("finish main");
 
     gui::terminate();
     glfwTerminate();

@@ -1,6 +1,10 @@
+#include <rtdemo/gui.hpp>
 #include <iostream>
-#include <rendering_techniques/stable.hpp>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <imgui.h>
 
+namespace rtdemo {
 namespace gui {
 namespace {
 GLFWwindow* window_ = nullptr;
@@ -203,12 +207,15 @@ void render_drawlists(ImDrawData* draw_data) {
         const ImDrawIdx* idx_buffer_offset = 0;
 
         glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-        GLvoid* vb_data = glMapBufferRange(GL_ARRAY_BUFFER, 0, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+        // GLvoid* vb_data = glMapBufferRange(GL_ARRAY_BUFFER, 0, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+        GLvoid* vb_data = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+        GLenum err = glGetError();
         memcpy(vb_data, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
         glUnmapBuffer(GL_ARRAY_BUFFER);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_);
-        GLvoid* ib_data = glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+        // GLvoid* ib_data = glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+        GLvoid* ib_data = glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
         memcpy(ib_data, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
         glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 
@@ -334,3 +341,4 @@ void new_frame() {
     ImGui::NewFrame();
 }
 }  // namespace gui
+}  // namespace rtdemo

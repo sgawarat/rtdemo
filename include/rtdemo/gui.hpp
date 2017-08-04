@@ -1,7 +1,11 @@
+#pragma once
+
 #include <GLFW/glfw3.h>
 
+namespace rtdemo {
 namespace gui {
 bool init(GLFWwindow* window);
 void terminate();
 void new_frame();
-} // namespace gui
+}  // namespace gui
+}  // namespace rtdemo
