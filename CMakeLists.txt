@@ -39,7 +39,13 @@ endif(WIN32)
 
 target_include_directories(rendering_techniques PRIVATE
     libs/imgui
+	libs/assimp/include
     ./include
+	${CMAKE_BINARY_DIR}/libs/assimp/include
+	glad
+	glfw
+	assimp
+	spdlog
 )
 target_link_libraries(rendering_techniques
     glad

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 #include <imgui.h>
 
 namespace rtdemo {
@@ -139,8 +140,11 @@ bool create_gl_resources() {
     glGenBuffers(1, &ibo_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_);
-    glBufferData(GL_ARRAY_BUFFER, 4 * 1024 * sizeof(ImDrawVert), nullptr, GL_DYNAMIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * 1024 * sizeof(ImDrawIdx), nullptr, GL_DYNAMIC_DRAW);
+    //glBufferData(GL_ARRAY_BUFFER, 4 * 1024 * sizeof(ImDrawVert), nullptr, GL_DYNAMIC_DRAW);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * 1024 * sizeof(ImDrawIdx), nullptr, GL_DYNAMIC_DRAW);
+	glBufferStorage(GL_ARRAY_BUFFER, 4 * 1024 * sizeof(ImDrawVert), nullptr, GL_MAP_WRITE_BIT);
+	glBufferStorage(GL_ELEMENT_ARRAY_BUFFER, 6 * 1024 * sizeof(ImDrawIdx), nullptr, GL_MAP_WRITE_BIT);
+
 
     const GLint pos_loc = glGetAttribLocation(prog_, "Position");
     const GLint uv_loc = glGetAttribLocation(prog_, "UV");
@@ -151,6 +155,8 @@ bool create_gl_resources() {
     glVertexAttribPointer(pos_loc, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, pos));
     glVertexAttribPointer(uv_loc, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, uv));
     glVertexAttribPointer(color_loc, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, col));
+
+	glBindVertexArray(0);
 
     tex_loc_ = glGetUniformLocation(prog_, "Texture");
     proj_loc_ = glGetUniformLocation(prog_, "ProjMtx");
@@ -207,15 +213,12 @@ void render_drawlists(ImDrawData* draw_data) {
         const ImDrawIdx* idx_buffer_offset = 0;
 
         glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-        // GLvoid* vb_data = glMapBufferRange(GL_ARRAY_BUFFER, 0, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-        GLvoid* vb_data = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-        GLenum err = glGetError();
+        GLvoid* vb_data = glMapBufferRange(GL_ARRAY_BUFFER, 0, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
         memcpy(vb_data, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
         glUnmapBuffer(GL_ARRAY_BUFFER);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_);
-        // GLvoid* ib_data = glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-        GLvoid* ib_data = glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
+        GLvoid* ib_data = glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
         memcpy(ib_data, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
         glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 

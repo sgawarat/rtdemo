@@ -36,7 +36,11 @@ int main() {
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
-    // init GLAD
+#ifdef WIN32
+	freopen("CONOUT$", "w", stdout);
+#endif
+
+	// init GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         RT_LOG_DEBUG("failed to gladLoadGLLoader");
         return EXIT_FAILURE;
@@ -48,12 +52,12 @@ int main() {
         gui::init(window);
 
         // init scene
-        // scene::StaticScene scene;
-        // scene.init();
+        scene::StaticScene scene;
+        scene.init();
 
-        // // init tech
-        // tech::ForwardShading shading;
-        // shading.init();
+        // init tech
+        tech::ForwardShading shading;
+        shading.init();
 
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
@@ -68,9 +72,9 @@ int main() {
             glClearDepthf(1.f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // shading.apply();
-            // scene.apply();
-            // scene.draw();
+            shading.apply();
+            scene.apply();
+            scene.draw();
 
             ImGui::Render();
 
