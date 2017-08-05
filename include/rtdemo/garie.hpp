@@ -108,6 +108,10 @@ public:
         glUseProgram(id());
     }
 
+    void uniform_block_binding(GLuint index, GLuint binding) const noexcept {
+        glUniformBlockBinding(id(), index, binding);
+    }
+
 private:
     friend class Object<Program>;
 
@@ -122,13 +126,13 @@ private:
 
 class Buffer : public Object<Buffer> {
 public:
-    void init_storage(GLenum target, GLsizeiptr size, const GLvoid* data, GLbitfield flags) const noexcept {
-        glBufferStorage(target, size, data, flags);
-    }
-
     void bind(GLenum target) const noexcept {
         glBindBuffer(target, id());
     }
+
+    void bind_base(GLenum target, GLuint index) const noexcept {
+        glBindBufferBase(target, index, id());
+    } 
 
 private:
     friend class Object<Buffer>;

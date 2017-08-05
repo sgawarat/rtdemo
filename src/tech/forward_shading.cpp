@@ -6,10 +6,12 @@ namespace tech {
 bool ForwardShading::init() {
     const char* vert_code = R"CODE(
         #version 450
-        layout(location = 0) uniform mat4 wvp;
+        layout(binding = 0) uniform Camera {
+            mat4 wvp;
+        } CAMERA;
         layout(location = 0) in vec3 position;
         void main() {
-            gl_Position = wvp;
+            gl_Position = CAMERA.wvp * vec4(position, 1);
         }
     )CODE";
     garie::VertexShader vert;
@@ -17,7 +19,7 @@ bool ForwardShading::init() {
     if (!vert.compile(vert_code)) {
         GLchar info_log[1024];
         vert.get_info_log(1024, info_log);
-        RT_LOG_DEBUG("Failed to compile vertex shader: {}", log_info);
+        RT_LOG_DEBUG("Failed to compile vertex shader: {}", info_log);
         return false;
     }
 
@@ -33,7 +35,7 @@ bool ForwardShading::init() {
     if (!frag.compile(frag_code)) {
         GLchar info_log[1024];
         frag.get_info_log(1024, info_log);
-        RT_LOG_DEBUG("Failed to compile fragment shader: {}", log_info);
+        RT_LOG_DEBUG("Failed to compile fragment shader: {}", info_log);
         return false;
     }
 
@@ -42,9 +44,10 @@ bool ForwardShading::init() {
     if (!prog.link(vert, frag)) {
         GLchar info_log[1024];
         prog.get_info_log(1024, info_log);
-        RT_LOG_DEBUG("Failed to link shader program: {}", log_info);
+        RT_LOG_DEBUG("Failed to link shader program: {}", info_log);
         return false;
     }
+    prog.uniform_block_binding(0, 0);
 
     prog_ = std::move(prog);
     return true;

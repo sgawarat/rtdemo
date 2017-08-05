@@ -28,8 +28,15 @@ add_executable(rendering_techniques
     libs/imgui/imgui.cpp
     libs/imgui/imgui_draw.cpp
 )
+target_compile_features(rendering_techniques PRIVATE
+    cxx_std_14
+)
+target_compile_options(rendering_techniques PRIVATE
+    -march=native
+)
 target_compile_definitions(rendering_techniques PRIVATE
     GLFW_INCLUDE_NONE
+    SPDLOG_DEBUG_ON
 )
 if(WIN32)
     target_compile_definitions(rendering_techniques PRIVATE
@@ -38,20 +45,17 @@ if(WIN32)
 endif(WIN32)
 
 target_include_directories(rendering_techniques PRIVATE
-    libs/imgui
-	libs/assimp/include
     ./include
-	${CMAKE_BINARY_DIR}/libs/assimp/include
-	glad
-	glfw
-	assimp
-	spdlog
+    libs/glm
+    libs/imgui
+	# libs/assimp/include
+	libs/spdlog/include
+    ${CMAKE_BINARY_DIR}/libs/assimp/include
 )
 target_link_libraries(rendering_techniques
     glad
     glfw
     assimp
-    spdlog
 )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

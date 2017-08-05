@@ -31,16 +31,18 @@ bool StaticScene::init() {
 
     garie::Buffer vbo;
     vbo.create();
-    vbo.init_storage(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), 0);
+    vbo.bind(GL_ARRAY_BUFFER);
+    glBufferStorage(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), 0);
 
     garie::Buffer ibo;
     ibo.create();
-    ibo.init_storage(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(Index), indices.data(), 0);
+    ibo.bind(GL_ELEMENT_ARRAY_BUFFER);
+    glBufferStorage(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(Index), indices.data(), 0);
 
     garie::VertexArray vao;
     vao.create();
-    garie::VertexArrayBuilder(vao)
-        .index_buffer(ibo)
+    garie::VertexArrayBuilder vao_builder(vao);
+    vao_builder.index_buffer(ibo)
         .vertex_buffer(vbo)
         .attribute(IN_POSITION_LOC, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, position), 0)
         .build();
@@ -48,6 +50,7 @@ bool StaticScene::init() {
     vao_ = std::move(vao);
     vbo_ = std::move(vbo);
     ibo_ = std::move(ibo);
+    count_ = mesh->mNumFaces * 3;
     return true;
 }
 

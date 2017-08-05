@@ -1,5 +1,7 @@
 #include <cstdlib>
 #include <imgui.h>
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
 #include <rtdemo/gui.hpp>
 #include <rtdemo/logging.hpp>
 #include <rtdemo/scene/static_scene.hpp>
@@ -59,6 +61,13 @@ int main() {
         tech::ForwardShading shading;
         shading.init();
 
+        // init camera
+        garie::Buffer camera_ubo;
+        camera_ubo.create();
+        camera_ubo.bind(GL_UNIFORM_BUFFER);
+        glBufferStorage(GL_UNIFORM_BUFFER, sizeof(glm::mat4), nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+        void* camera_ubo_ptr = glMapBufferRange(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
 
@@ -72,8 +81,17 @@ int main() {
             glClearDepthf(1.f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+            {
+                const glm::mat4 view = glm::lookAt(glm::vec3(0.f, 0.f, 5.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
+                const glm::mat4 proj = glm::perspectiveFov(glm::radians(45.f), 1280.f, 720.f, 0.01f, 100.f);
+                const glm::mat4 view_proj = proj * view;
+                memcpy(camera_ubo_ptr, glm::value_ptr(view_proj), sizeof(glm::mat4));
+            }
+
+
             shading.apply();
             scene.apply();
+            camera_ubo.bind_base(GL_UNIFORM_BUFFER, 0);
             scene.draw();
 
             ImGui::Render();
@@ -86,6 +104,10 @@ int main() {
     gui::terminate();
     glfwTerminate();
 
+#ifdef WIN32
     system("PAUSE");
+#else
+    system("read -p \"Press Enter key to continue...\"");
+#endif
     return EXIT_SUCCESS;
 }
