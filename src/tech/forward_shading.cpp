@@ -25,9 +25,12 @@ bool ForwardShading::init() {
 
     const char* frag_code = R"CODE(
         #version 450
+        layout(binding = 1) uniform Material {
+            vec3 diffuse;
+        } MATERIAL;
         layout(location = 0) out vec4 final_color;
         void main() {
-            final_color = vec4(1, 0, 1, 1);
+            final_color = vec4(MATERIAL.diffuse, 1);
         }
     )CODE";
     garie::FragmentShader frag;
@@ -48,6 +51,7 @@ bool ForwardShading::init() {
         return false;
     }
     prog.uniform_block_binding(0, 0);
+    prog.uniform_block_binding(1, 1);
 
     prog_ = std::move(prog);
     return true;

@@ -42,9 +42,9 @@ int main() {
 	freopen("CONOUT$", "w", stdout);
 #endif
 
-	// init GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        RT_LOG_DEBUG("failed to gladLoadGLLoader");
+	// init GLEW
+    if (glewInit() != GLEW_OK) {
+        RT_LOG_DEBUG("failed to glewInit");
         return EXIT_FAILURE;
     }
 
@@ -62,6 +62,10 @@ int main() {
         shading.init();
 
         // init camera
+        const glm::mat4 proj = glm::perspectiveFov(glm::radians(45.f), 1280.f, 720.f, 0.01f, 100.f);
+        glm::vec3 camera_pos(0.f, 0.f, 5.f);
+        float camera_yaw = 0.f;
+        float camera_pitch = 0.f;
         garie::Buffer camera_ubo;
         camera_ubo.create();
         camera_ubo.bind(GL_UNIFORM_BUFFER);
@@ -73,7 +77,9 @@ int main() {
 
             gui::new_frame();
 
-            ImGui::Text("hello world");
+            ImGui::DragFloat("distance", &camera_pos.z, 0.01f, 0.01f, 10.f);
+            ImGui::SliderAngle("yaw", &camera_yaw, -180.f, 180.f);
+            ImGui::SliderAngle("pitch", &camera_pitch, -90.f, 90.f);
 
             glViewport(0, 0, 1280, 720);
             glDisable(GL_SCISSOR_TEST);
@@ -82,12 +88,16 @@ int main() {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             {
-                const glm::mat4 view = glm::lookAt(glm::vec3(0.f, 0.f, 5.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
-                const glm::mat4 proj = glm::perspectiveFov(glm::radians(45.f), 1280.f, 720.f, 0.01f, 100.f);
+                const glm::mat3 rot = glm::yawPitchRoll(camera_yaw, camera_pitch, 0.f);
+                const glm::vec3 eye = rot * camera_pos;
+                const glm::vec3 front = rot * glm::vec3(0.f, 0.f, -1.f);
+                const glm::vec3 up = rot * glm::vec3(0.f, 1.f, 0.f);
+                const glm::mat4 view = glm::lookAt(eye, glm::vec3(), up);
                 const glm::mat4 view_proj = proj * view;
                 memcpy(camera_ubo_ptr, glm::value_ptr(view_proj), sizeof(glm::mat4));
             }
 
+            glEnable(GL_DEPTH_TEST);
 
             shading.apply();
             scene.apply();
@@ -107,7 +117,7 @@ int main() {
 #ifdef WIN32
     system("PAUSE");
 #else
-    system("read -p \"Press Enter key to continue...\"");
+    // system("read -p \"Press Enter key to continue...\"");
 #endif
     return EXIT_SUCCESS;
 }

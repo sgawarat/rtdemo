@@ -1,20 +1,10 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(rendering_techniques VERSION 0.1.0)
 
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-add_subdirectory(libs/glfw)
-
-set(GLAD_PROFILE "core" CACHE STRING "" FORCE)
-add_subdirectory(libs/glad)
-
-set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-add_subdirectory(libs/assimp)
-
-set(SPDLOG_BUILD_TESTING OFF CACHE BOOL "" FORCE)
-add_subdirectory(libs/spdlog)
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(assimp REQUIRED)
 
 include(CTest)
 enable_testing()
@@ -36,7 +26,6 @@ target_compile_options(rendering_techniques PRIVATE
 )
 target_compile_definitions(rendering_techniques PRIVATE
     GLFW_INCLUDE_NONE
-    SPDLOG_DEBUG_ON
 )
 if(WIN32)
     target_compile_definitions(rendering_techniques PRIVATE
@@ -45,19 +34,24 @@ if(WIN32)
 endif(WIN32)
 
 target_include_directories(rendering_techniques PRIVATE
-    ./include
-    libs/glm
-    libs/imgui
-	# libs/assimp/include
-	libs/spdlog/include
-    ${CMAKE_BINARY_DIR}/libs/assimp/include
+    ${PROJECT_SOURCE_DIR}/include
+	${PROJECT_SOURCE_DIR}/libs/spdlog/include
+    ${PROJECT_SOURCE_DIR}/libs/imgui
+    ${PROJECT_SOURCE_DIR}/libs/glm
+    ${ASSIMP_INCLUDE_DIR}
+    ${GLFW_INCLUDE_DIR}
+    ${GLEW_INCLUDE_DIR}
+    ${OPENGL_INCLUDE_DIR}
 )
 target_link_libraries(rendering_techniques
-    glad
-    glfw
     assimp
+    glfw
+    ${GLEW_LIBRARY}
+    ${OPENGL_gl_LIBRARY}
+    pthread
 )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
+

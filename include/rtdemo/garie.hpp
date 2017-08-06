@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glad/glad.h>
+#include <GL/glew.h>
 
 // OpenGL RAII wrappers
 namespace garie {
@@ -132,7 +132,11 @@ public:
 
     void bind_base(GLenum target, GLuint index) const noexcept {
         glBindBufferBase(target, index, id());
-    } 
+    }
+
+    void bind_range(GLenum target, GLuint index, GLintptr offset, GLsizeiptr size) const noexcept {
+        glBindBufferRange(target, index, id(), offset, size);
+    }
 
 private:
     friend class Object<Buffer>;
