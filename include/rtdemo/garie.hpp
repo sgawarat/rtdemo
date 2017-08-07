@@ -112,6 +112,10 @@ public:
         glUniformBlockBinding(id(), index, binding);
     }
 
+    void shader_storage_block_binding(GLuint index, GLuint binding) const noexcept {
+        glShaderStorageBlockBinding(id(), index, binding);
+    }
+
 private:
     friend class Object<Program>;
 

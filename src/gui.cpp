@@ -165,7 +165,7 @@ bool create_gl_resources() {
     ImGuiIO& io = ImGui::GetIO();
     unsigned char* pixels;
     int width, height;
-    io.Fonts->AddFontFromFileTTF("data/fonts/migu-1m-regular.ttf", 14.f, nullptr, io.Fonts->GetGlyphRangesJapanese());
+    io.Fonts->AddFontFromFileTTF("assets/fonts/migu-1m-regular.ttf", 14.f, nullptr, io.Fonts->GetGlyphRangesJapanese());
     io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
 
     // Upload texture to graphics system

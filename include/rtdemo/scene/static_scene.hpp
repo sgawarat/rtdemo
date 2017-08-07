@@ -10,16 +10,33 @@ class StaticScene {
 public:
     struct Vertex {
         float position[3];
+        float normal[3];
     };
     using Index = uint16_t;
 
     struct Material {
+        float ambient[3];
+        float _ambient;
         float diffuse[3];
-        float _pad[61];
+        float _diffuse;
+        float specular[3];
+        float specular_power;
     };
-    static_assert(sizeof(Material) % 256 == 0, "Material requires UBO alignment");
+
+    struct Light {
+        float position_w[3];
+        float _position_w;
+    };
+
+    enum class DrawMode {
+        DRAW,
+        DRAW_INDIRECT,
+        // MULTIDRAW,
+        // MULTIDRAW_INDIRECT,
+    };
 
     static constexpr GLint IN_POSITION_LOC = 0;
+    static constexpr GLint IN_NORMAL_LOC = 1;
 
     bool init();
 
@@ -27,19 +44,31 @@ public:
 
     void draw() const noexcept;
 
+    void set_draw_mode(DrawMode mode) noexcept {
+        draw_mode_ = mode;
+    }
+
 private:
-    struct DrawParam {
-        size_t material_index;
-        GLsizei index_count;
-        GLsizeiptr index_offset;
-        GLint base_vertex;
+    struct ResourceIndex {
+        uint32_t material_index;
+    };
+    struct Command {
+        GLuint index_count;
+        GLuint instance_count;
+        GLuint index_first;
+        GLuint base_vertex;
+        GLuint base_instance;
     };
 
     garie::VertexArray vao_;
     garie::Buffer vbo_;
     garie::Buffer ibo_;
-    garie::Buffer material_ubo_;
-    std::vector<DrawParam> draw_params_;
+    garie::Buffer resource_indices_ssbo_;
+    garie::Buffer materials_ssbo_;
+    garie::Buffer lights_ssbo_;
+    DrawMode draw_mode_ = DrawMode::DRAW;
+    garie::Buffer dio_;
+    std::vector<Command> commands_;
 };
 }  // namespace scene
 }  // namespace rtdemo

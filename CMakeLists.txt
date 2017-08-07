@@ -51,7 +51,10 @@ target_link_libraries(rendering_techniques
     pthread
 )
 
+add_custom_target(glsl ALL glslangValidator ./*.{vert,frag}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/assets/shaders
+    COMMENT "Validating shaders")
+
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
-
