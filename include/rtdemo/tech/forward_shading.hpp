@@ -2,26 +2,30 @@
 
 #include <string>
 #include <rtdemo/garie.hpp>
+#include <rtdemo/layout/static_layout.hpp>
+#include <rtdemo/tech/technique.hpp>
 
 namespace rtdemo {
 namespace tech {
-class ForwardShading {
+class ForwardShading : public Technique {
 public:
-    bool init();
+    using Layout = layout::StaticLayout;
 
-    void apply() const noexcept;
+    ~ForwardShading() noexcept override {}
 
-    explicit operator bool() const noexcept {
-        return info_log_.empty();
-    }
+    bool restore() override;
 
-    const std::string& info_log() const noexcept {
-        return info_log_;
-    }
+    bool invalidate() override;
+
+    void update() override;
+
+    void update_gui() override;
+
+    void apply(scene::Scene* scene) override;
 
 private:
     garie::Program prog_;
-    std::string info_log_;
+    std::string log_;
 };
 }  // namespace tech
 }  // namespace rtdemo

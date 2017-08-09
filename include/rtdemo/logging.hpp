@@ -1,6 +1,7 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/fmt.h>
 
 #define RT_LOG_DEBUG(...) ::rtdemo::logging::get_logger()->debug(__VA_ARGS__)
 

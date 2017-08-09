@@ -17,13 +17,14 @@ public:
     }
 
     ~Object() noexcept {
-        if (id_) Derived::destroy_impl(id_);
+        if (id_) Derived::delete_impl(id_);
     }
 
     Object& operator=(const Object&) = delete;
 
     Object& operator=(Object&& other) noexcept {
-        if (&other != this) {
+        if (other.id_ != id_) {
+            if (id_) Derived::delete_impl(id_);
             id_ = other.id_;
             other.id_ = 0;
         }
@@ -34,8 +35,8 @@ public:
         return id_ != 0;
     }
 
-    void create() noexcept {
-        id_ = Derived::create_impl();
+    void gen() noexcept {
+        id_ = Derived::gen_impl();
     }
 
     GLuint id() const noexcept {
@@ -67,11 +68,11 @@ public:
 private:
     friend class Object<Shader<TYPE>>;
 
-    static GLuint create_impl() noexcept {
+    static GLuint gen_impl() noexcept {
         return glCreateShader(TYPE);
     }
 
-    static void destroy_impl(GLuint id) noexcept {
+    static void delete_impl(GLuint id) noexcept {
         return glDeleteShader(id);
     }
 };
@@ -80,11 +81,6 @@ using FragmentShader = Shader<GL_FRAGMENT_SHADER>;
 
 class Program : public Object<Program> {
 public:
-    // template <GLenum TYPE>
-    // void attach(const Shader<TYPE>& shader) const noexcept {
-    //     glAttachShader(id(), shader.id());
-    // }
-
     template <GLenum... TYPES>
     bool link(const Shader<TYPES>&... shaders) const noexcept {
         const GLuint shader_ids[] = {shaders.id()...};
@@ -119,11 +115,11 @@ public:
 private:
     friend class Object<Program>;
 
-    static GLuint create_impl() noexcept {
+    static GLuint gen_impl() noexcept {
         return glCreateProgram();
     }
 
-    static void destroy_impl(GLuint id) noexcept {
+    static void delete_impl(GLuint id) noexcept {
         return glDeleteProgram(id);
     }
 };
@@ -145,13 +141,13 @@ public:
 private:
     friend class Object<Buffer>;
 
-    static GLuint create_impl() noexcept {
+    static GLuint gen_impl() noexcept {
         GLuint id = 0;
         glGenBuffers(1, &id);
         return id;
     }
 
-    static void destroy_impl(GLuint id) noexcept {
+    static void delete_impl(GLuint id) noexcept {
         return glDeleteBuffers(1, &id);
     }
 };
@@ -165,13 +161,13 @@ public:
 private:
     friend class Object<VertexArray>;
 
-    static GLuint create_impl() noexcept {
+    static GLuint gen_impl() noexcept {
         GLuint id = 0;
         glGenVertexArrays(1, &id);
         return id;
     }
 
-    static void destroy_impl(GLuint id) noexcept {
+    static void delete_impl(GLuint id) noexcept {
         return glDeleteVertexArrays(1, &id);
     }
 };

@@ -11,8 +11,10 @@ enable_testing()
 
 add_executable(rendering_techniques
     src/main.cpp
+    src/application.cpp
     src/gui.cpp
     src/logging.cpp
+    src/layout/static_layout.cpp
     src/scene/static_scene.cpp
     src/tech/forward_shading.cpp
     libs/imgui/imgui.cpp

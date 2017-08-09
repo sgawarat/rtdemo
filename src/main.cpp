@@ -1,11 +1,11 @@
 #include <cstdlib>
+#include <GL/glew.h>
 #include <imgui.h>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <rtdemo/gui.hpp>
 #include <rtdemo/logging.hpp>
-#include <rtdemo/scene/static_scene.hpp>
-#include <rtdemo/tech/forward_shading.hpp>
+#include <rtdemo/application.hpp>
 
 using namespace rtdemo;
 
@@ -54,73 +54,23 @@ int main() {
         // init GUI
         gui::init(window);
 
-        // init scene
-        scene::StaticScene scene;
-        scene.init();
-
-        // init tech
-        tech::ForwardShading shading;
-        shading.init();
-
-        // init camera
-        struct Camera {
-            glm::mat4 wvp;
-            glm::vec3 position_w;
-            float _pad;
-        };
-        const glm::mat4 proj = glm::perspectiveFov(glm::radians(45.f), 1280.f, 720.f, 0.01f, 100.f);
-        glm::vec3 camera_pos(0.f, 0.f, 5.f);
-        float camera_yaw = 0.f;
-        float camera_pitch = 0.f;
-        int draw_mode = 0;
-        garie::Buffer camera_ubo;
-        camera_ubo.create();
-        camera_ubo.bind(GL_UNIFORM_BUFFER);
-        glBufferStorage(GL_UNIFORM_BUFFER, sizeof(Camera), nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-        Camera* camera_ubo_ptr = reinterpret_cast<Camera*>(glMapBufferRange(GL_UNIFORM_BUFFER, 0, sizeof(Camera), GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
+        // init application
+        Application app;
+        app.init();
 
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
 
             gui::new_frame();
 
-            ImGui::DragFloat("distance", &camera_pos.z, 0.01f, 0.01f, 10.f);
-            ImGui::SliderAngle("yaw", &camera_yaw, -180.f, 180.f);
-            ImGui::SliderAngle("pitch", &camera_pitch, -90.f, 90.f);
-            ImGui::Combo("draw mode", &draw_mode, "DRAW\0DRAW_INDIRECT\0\0");
-            if (ImGui::Button("compile shader")) {
-                shading.init();
-            }
-            ImGui::TextWrapped(shading.info_log().data());
-            // ImGui::InputTextMultiline("info log", const_cast<char*>(shading.info_log().data()), shading.info_log().size(), ImVec2(0.f, ImGui::GetTextLineHeight() * 16), ImGuiInputTextFlags_ReadOnly);
-
+            // clear frontbuffer
             glViewport(0, 0, 1280, 720);
             glDisable(GL_SCISSOR_TEST);
             glClearColor(0.2f, 0.2f, 0.2f, 1.f);
             glClearDepthf(1.f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            {
-                const glm::mat3 rot = glm::yawPitchRoll(camera_yaw, camera_pitch, 0.f);
-                const glm::vec3 eye = rot * camera_pos;
-                const glm::vec3 front = rot * glm::vec3(0.f, 0.f, -1.f);
-                const glm::vec3 up = rot * glm::vec3(0.f, 1.f, 0.f);
-                const glm::mat4 view = glm::lookAt(eye, glm::vec3(), up);
-                const glm::mat4 view_proj = proj * view;
-                camera_ubo_ptr->wvp = view_proj;
-                camera_ubo_ptr->position_w = eye;
-            }
-
-            glEnable(GL_DEPTH_TEST);
-
-            scene.set_draw_mode(static_cast<scene::StaticScene::DrawMode>(draw_mode));
-
-            if (shading) {
-                shading.apply();
-                scene.apply();
-                camera_ubo.bind_base(GL_UNIFORM_BUFFER, 0);
-                scene.draw();
-            }
+            app.update();
 
             ImGui::Render();
 

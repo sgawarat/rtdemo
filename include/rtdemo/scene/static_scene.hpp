@@ -1,57 +1,34 @@
 #pragma once
 
 #include <vector>
-#include <cstdint>
 #include <rtdemo/garie.hpp>
+#include <rtdemo/layout/static_layout.hpp>
+#include <rtdemo/scene/scene.hpp>
 
 namespace rtdemo {
 namespace scene {
-class StaticScene {
+class StaticScene : public Scene {
 public:
-    struct Vertex {
-        float position[3];
-        float normal[3];
-    };
-    using Index = uint16_t;
+    using Layout = layout::StaticLayout;
 
-    struct Material {
-        float ambient[3];
-        float _ambient;
-        float diffuse[3];
-        float _diffuse;
-        float specular[3];
-        float specular_power;
-    };
+    ~StaticScene() noexcept override {}
 
-    struct Light {
-        float position_w[3];
-        float _position_w;
-    };
+    bool restore() override;
 
-    enum class DrawMode {
-        DRAW,
-        DRAW_INDIRECT,
-        // MULTIDRAW,
-        // MULTIDRAW_INDIRECT,
-    };
+    bool invalidate() override;
 
-    static constexpr GLint IN_POSITION_LOC = 0;
-    static constexpr GLint IN_NORMAL_LOC = 1;
+    void update() override;
 
-    bool init();
+    void update_gui() override;
 
-    void apply() const noexcept;
-
-    void draw() const noexcept;
-
-    void set_draw_mode(DrawMode mode) noexcept {
-        draw_mode_ = mode;
-    }
+    void draw(size_t index) override;
 
 private:
-    struct ResourceIndex {
-        uint32_t material_index;
+    enum class DrawMode : int {
+        DRAW,
+        DRAW_INDIRECT,
     };
+
     struct Command {
         GLuint index_count;
         GLuint instance_count;
@@ -60,13 +37,19 @@ private:
         GLuint base_instance;
     };
 
+    Layout::Camera* mapped_camera_ubo_ = nullptr;
+    float camera_distance_ = 0.f;
+    float camera_yaw_ = 0.f;
+    float camera_pitch_ = 0.f;
+    DrawMode draw_mode_ = DrawMode::DRAW;
+
     garie::VertexArray vao_;
     garie::Buffer vbo_;
     garie::Buffer ibo_;
-    garie::Buffer resource_indices_ssbo_;
-    garie::Buffer materials_ssbo_;
-    garie::Buffer lights_ssbo_;
-    DrawMode draw_mode_ = DrawMode::DRAW;
+    garie::Buffer camera_ubo_;
+    garie::Buffer resource_index_ssbo_;
+    garie::Buffer material_ssbo_;
+    garie::Buffer light_ssbo_;
     garie::Buffer dio_;
     std::vector<Command> commands_;
 };
