@@ -10,7 +10,7 @@ struct Light {
 };
 
 layout(binding = 0) uniform Camera {
-    mat4 wvp;
+    mat4 view_proj;
     vec3 position_w;
 } CAMERA;
 layout(binding = 0) buffer ResourceIndexBuffer {

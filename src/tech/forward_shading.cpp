@@ -4,76 +4,21 @@
 #include <imgui.h>
 #include <rtdemo/logging.hpp>
 #include <rtdemo/managed.hpp>
+#include <rtdemo/tech/detail/util.hpp>
 
 namespace rtdemo {
 RT_MANAGED_TECHNIQUE_INSTANCE(tech, ForwardShading);
 
 namespace tech {
-namespace {
-bool read_from_file(const char* path, std::vector<char>& code) {
-    std::ifstream ifs(path);
-    if (!ifs) {
-        RT_LOG_DEBUG("failed to open \"{}\"", path);
-        return false;
-    }
-
-    ifs.seekg(0, std::ios::end);
-    const auto end = ifs.tellg();
-    ifs.seekg(0, std::ios::beg);
-    const auto length = end - ifs.tellg();
-
-    code.resize(length);
-    ifs.read(code.data(), code.size());
-    return true;
-}
-}  // namespace
-
 bool ForwardShading::restore() {
-    std::vector<char> code;
-    code.reserve(1024);
+    garie::VertexShader vert = detail::compile_shader_from_file<GL_VERTEX_SHADER>("assets/shaders/forward_shading.vert", &log_);
+    if (!vert) return false;
 
-    // load vertex shader from file
-    const char* vert_path = "assets/shaders/forward_shading.vert";
-    if (!read_from_file(vert_path, code)) {
-        log_ = fmt::format("failed to open \"{}\"", vert_path);
-        return false;
-    }
-    garie::VertexShader vert;
-    vert.gen();
-    if (!vert.compile(code.data(), code.size())) {
-        GLchar info_log[1024];
-        vert.get_info_log(1024, info_log);
-        log_ = fmt::format("Failed to compile vertex shader: {}", info_log);
-        RT_LOG_DEBUG("{}", log_.c_str());
-        return false;
-    }
+    garie::FragmentShader frag = detail::compile_shader_from_file<GL_FRAGMENT_SHADER>("assets/shaders/forward_shading.frag", &log_);
+    if (!frag) return false;
 
-    // load fragment shader from file
-    const char* frag_path = "assets/shaders/forward_shading.frag";
-    if (!read_from_file(frag_path, code)) {
-        log_ = fmt::format("failed to open \"{}\"", frag_path);
-        return false;
-    }
-    garie::FragmentShader frag;
-    frag.gen();
-    if (!frag.compile(code.data(), code.size())) {
-        GLchar info_log[1024];
-        frag.get_info_log(1024, info_log);
-        log_ = fmt::format("Failed to compile fragment shader: {}", info_log);
-        RT_LOG_DEBUG("{}", log_.c_str());
-        return false;
-    }
-
-    // create shader program
-    garie::Program prog;
-    prog.gen();
-    if (!prog.link(vert, frag)) {
-        GLchar info_log[1024];
-        prog.get_info_log(1024, info_log);
-        log_ = fmt::format("Failed to link shader program: {}", info_log);
-        RT_LOG_DEBUG("{}", log_.c_str());
-        return false;
-    }
+    garie::Program prog = detail::link_program(vert, frag, &log_);
+    if (!prog) return false;
 
     // finalize
     prog_ = std::move(prog);
@@ -95,7 +40,8 @@ void ForwardShading::update_gui() {
 
 void ForwardShading::apply(scene::Scene* scene) {
     if (prog_) prog_.use();
-    if (scene) scene->draw(0);
+    glEnable(GL_DEPTH_TEST);
+    if (scene) scene->draw(Layout::DrawPass::GEOMETRIES);
 }
 }  // namespace tech
 }  // namespace rtrdemo

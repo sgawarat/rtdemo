@@ -21,7 +21,7 @@ public:
 
     void update_gui() override;
 
-    void draw(size_t index) override;
+    void draw(size_t pass) override;
 
 private:
     enum class DrawMode : int {

@@ -11,7 +11,7 @@ public:
     virtual bool invalidate() = 0;
     virtual void update() = 0;
     virtual void update_gui() = 0;
-    virtual void draw(size_t index) = 0;
+    virtual void draw(size_t pass) = 0;
 };
 }  // namespace scene
 }  // namespace rtdemo

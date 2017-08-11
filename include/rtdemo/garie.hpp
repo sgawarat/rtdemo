@@ -209,4 +209,251 @@ public:
         glBindVertexArray(0);
     }
 };
+
+class Texture : public Object<Texture> {
+public:
+    void bind(GLenum target) const noexcept {
+        glBindTexture(target, id());
+    }
+
+    void active(GLuint index, GLenum target) const noexcept {
+        glActiveTexture(GL_TEXTURE0 + index);
+        glBindTexture(target, id());
+    }
+
+private:
+    friend class Object<Texture>;
+
+    static GLuint gen_impl() noexcept {
+        GLuint id = 0;
+        glGenTextures(1, &id);
+        return id;
+    }
+
+    static void delete_impl(GLuint id) noexcept {
+        return glDeleteTextures(1, &id);
+    }
+};
+
+class Sampler : public Object<Sampler> {
+public:
+    void bind(GLuint unit) const noexcept {
+        glBindSampler(unit, id());
+    }
+
+    void parameter(GLenum pname, GLfloat param) const noexcept {
+        glSamplerParameterf(id(), pname, param);
+    }
+
+    void parameter(GLenum pname, GLint param) const noexcept {
+        glSamplerParameteri(id(), pname, param);
+    }
+
+    void parameter(GLenum pname, GLenum param) const noexcept {
+        glSamplerParameteri(id(), pname, static_cast<GLint>(param));
+    }
+
+    void parameter(GLenum pname, const GLfloat* params) const noexcept {
+        glSamplerParameterfv(id(), pname, params);
+    }
+
+    void parameter(GLenum pname, const GLint* params) const noexcept {
+        glSamplerParameteriv(id(), pname, params);
+    }
+
+    void parameter_int(GLenum pname, const GLint* params) const noexcept {
+        glSamplerParameterIiv(id(), pname, params);
+    }
+
+    void parameter_int(GLenum pname, const GLuint* params) const noexcept {
+        glSamplerParameterIuiv(id(), pname, params);
+    }
+
+private:
+    friend class Object<Sampler>;
+
+    static GLuint gen_impl() noexcept {
+        GLuint id = 0;
+        glGenSamplers(1, &id);
+        return id;
+    }
+
+    static void delete_impl(GLuint id) noexcept {
+        return glDeleteSamplers(1, &id);
+    }
+};
+
+class SamplerBuilder final {
+public:
+    SamplerBuilder(const Sampler& sampler) : sampler_(sampler) {}
+
+    SamplerBuilder(const SamplerBuilder&) = delete;
+
+    SamplerBuilder(SamplerBuilder&&) = delete;
+    
+    ~SamplerBuilder() = default;
+
+    SamplerBuilder& operator=(const SamplerBuilder&) = delete;
+    
+    SamplerBuilder& operator=(SamplerBuilder&&) = delete;
+    
+    const SamplerBuilder& lod_bias(const GLfloat* values) const noexcept {
+        sampler_.parameter(GL_TEXTURE_LOD_BIAS, values);
+        return *this;
+    }
+
+    const SamplerBuilder& min_filter(GLenum mode) const noexcept {
+        sampler_.parameter(GL_TEXTURE_MIN_FILTER, mode);
+        return *this;
+    }
+
+    const SamplerBuilder& mag_filter(GLenum mode) const noexcept {
+        sampler_.parameter(GL_TEXTURE_MAG_FILTER, mode);
+        return *this;
+    }
+
+    const SamplerBuilder& lod(GLfloat min_lod, GLfloat max_lod) const noexcept {
+        sampler_.parameter(GL_TEXTURE_MIN_LOD, min_lod);
+        sampler_.parameter(GL_TEXTURE_MAX_LOD, max_lod);
+        return *this;
+    }
+
+    const SamplerBuilder& min_lod(GLfloat lod) const noexcept {
+        sampler_.parameter(GL_TEXTURE_MIN_LOD, lod);
+        return *this;
+    }
+
+    const SamplerBuilder& max_lod(GLfloat lod) const noexcept {
+        sampler_.parameter(GL_TEXTURE_MAX_LOD, lod);
+        return *this;
+    }
+
+    const SamplerBuilder& wrap_s(GLenum mode) const noexcept {
+        sampler_.parameter(GL_TEXTURE_WRAP_S, mode);
+        return *this;
+    }
+
+    const SamplerBuilder& wrap_t(GLenum mode) const noexcept {
+        sampler_.parameter(GL_TEXTURE_WRAP_T, mode);
+        return *this;
+    }
+
+    const SamplerBuilder& wrap_r(GLenum mode) const noexcept {
+        sampler_.parameter(GL_TEXTURE_WRAP_R, mode);
+        return *this;
+    }
+
+    const SamplerBuilder& border_color(const GLfloat* color) const noexcept {
+        sampler_.parameter(GL_TEXTURE_BORDER_COLOR, color);
+        return *this;
+    }
+
+    const SamplerBuilder& border_color(const GLint* color) const noexcept {
+        sampler_.parameter(GL_TEXTURE_BORDER_COLOR, color);
+        return *this;
+    }
+
+    const SamplerBuilder& border_color_int(const GLint* color) const noexcept {
+        sampler_.parameter_int(GL_TEXTURE_BORDER_COLOR, color);
+        return *this;
+    }
+
+    const SamplerBuilder& border_color_int(const GLuint* color) const noexcept {
+        sampler_.parameter_int(GL_TEXTURE_BORDER_COLOR, color);
+        return *this;
+    }
+
+    void build() const noexcept {}
+
+private:
+    const Sampler& sampler_;
+};
+
+class Framebuffer final : public Object<Framebuffer> {
+public:
+    void bind(GLenum target) const noexcept {
+        glBindFramebuffer(target, id());
+    }
+
+private:
+    friend class Object<Framebuffer>;
+    
+    static GLuint gen_impl() noexcept {
+        GLuint id = 0;
+        glGenFramebuffers(1, &id);
+        return id;
+    }
+
+    static void delete_impl(GLuint id) noexcept {
+        return glDeleteFramebuffers(1, &id);
+    }
+};
+
+class FramebufferBuilder final {
+public:
+    FramebufferBuilder(const Framebuffer& framebuffer) {
+        framebuffer.bind(GL_FRAMEBUFFER);
+    }
+
+    FramebufferBuilder(const FramebufferBuilder&) = delete;
+
+    FramebufferBuilder(FramebufferBuilder&&) = delete;
+
+    ~FramebufferBuilder() = default;
+
+    FramebufferBuilder& operator=(const FramebufferBuilder&) = delete;
+
+    FramebufferBuilder& operator=(FramebufferBuilder&&) = delete;
+
+    const FramebufferBuilder& color_texture(GLuint index, const Texture& texture, GLint level = 0) const noexcept {
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, texture.id(), level);
+        return *this;
+    }
+
+    const FramebufferBuilder& depth_texture(const Texture& texture, GLint level = 0) const noexcept {
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture.id(), level);
+        return *this;
+    }
+
+    const FramebufferBuilder& depthstencil_texture(const Texture& texture, GLint level = 0) const noexcept {
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, texture.id(), level);
+        return *this;
+    }
+
+    const FramebufferBuilder& color_texture_2d(GLuint index, GLenum target, const Texture& texture, GLint level = 0) const noexcept {
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, target, texture.id(), level);
+        return *this;
+    }
+
+    const FramebufferBuilder& depth_texture_2d(GLenum target, const Texture& texture, GLint level = 0) const noexcept {
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, target, texture.id(), level);
+        return *this;
+    }
+
+    const FramebufferBuilder& depthstencil_texture_2d(GLenum target, const Texture& texture, GLint level = 0) const noexcept {
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, target, texture.id(), level);
+        return *this;
+    }
+
+    const FramebufferBuilder& color_texture_layer(GLuint index, GLenum target, const Texture& texture, GLint level = 0, GLint layer = 0) const noexcept {
+        glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, texture.id(), level, layer);
+        return *this;
+    }
+
+    const FramebufferBuilder& depth_texture_layer(GLenum target, const Texture& texture, GLint level = 0, GLint layer = 0) const noexcept {
+        glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture.id(), level, layer);
+        return *this;
+    }
+
+    const FramebufferBuilder& depthstencil_texture_layer(GLenum target, const Texture& texture, GLint level = 0, GLint layer = 0) const noexcept {
+        glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, texture.id(), level, layer);
+        return *this;
+    }
+
+    bool build() const noexcept {
+        const GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        return result == GL_FRAMEBUFFER_COMPLETE;
+    }
+};
 }  // namespace garie

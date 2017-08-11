@@ -11,7 +11,7 @@ using namespace rtdemo;
 
 namespace {
 void glfw_error_callback(int, const char* desc) {
-    RT_LOG_DEBUG("GLFW Error: {}", desc);
+    RT_LOG(error, "GLFW Error: {}", desc);
 }
 } // namespace
 
@@ -19,7 +19,7 @@ int main() {
     // init GLFW
     glfwSetErrorCallback((GLFWerrorfun)glfw_error_callback);
     if (!glfwInit()) {
-        RT_LOG_DEBUG("failed to glfwInit");
+        RT_LOG(error, "failed to glfwInit");
         return EXIT_FAILURE;
     }
 
@@ -32,7 +32,7 @@ int main() {
 #endif
     GLFWwindow* window = glfwCreateWindow(1280, 720, "Rendering Techniques Demo", nullptr, nullptr);
     if (!window) {
-        RT_LOG_DEBUG("failed to glfwCreateWindow");
+        RT_LOG(error, "failed to glfwCreateWindow");
         return EXIT_FAILURE;
     }
     glfwMakeContextCurrent(window);
@@ -45,11 +45,11 @@ int main() {
 
 	// init GLEW
     if (glewInit() != GLEW_OK) {
-        RT_LOG_DEBUG("failed to glewInit");
+        RT_LOG(error, "failed to glewInit");
         return EXIT_FAILURE;
     }
 
-    RT_LOG_DEBUG("start main");
+    RT_LOG(info, "start main");
     {
         // init GUI
         gui::init(window);
@@ -77,7 +77,7 @@ int main() {
             glfwSwapBuffers(window);
         }
     }
-    RT_LOG_DEBUG("finish main");
+    RT_LOG(info, "finish main");
 
     gui::terminate();
     glfwTerminate();

@@ -9,27 +9,41 @@ class StaticLayout final {
 public:
     static const uint64_t ID;// = 1000;
 
+    // draw pass
+    struct DrawPass final {
+        static constexpr size_t GEOMETRIES = 0;
+    };
+
+    // input
     struct Vertex {
         glm::vec3 position;
         glm::vec3 normal;
     };
-    static constexpr int POSITION_ATTRIBUTE_LOCATION = 0;
-    static constexpr int NORMAL_ATTRIBUTE_LOCATION = 1;
-
     using Index = uint16_t;
+    struct AttributeLocation final {
+        static constexpr int POSITION = 0;
+        static constexpr int NORMAL = 1;
+    };
 
+    // constant
+    struct ConstantLocation final {
+        static constexpr int DRAW_ID = 10;  // same as gl_DrawID
+    };
+    
+    // uniform buffer
     struct Camera {
         glm::mat4 view_proj;
         glm::vec3 position_w;
         float _position_w;
     };
-    static constexpr int CAMERA_UNIFORM_BINDING = 0;
+    struct UniformBinding final {
+        static constexpr int CAMERA = 0;
+    };
 
+    // storage buffer
     struct ResourceIndex {
         uint32_t material_index;
     };
-    static constexpr int RESOURCE_INDEX_STORAGE_BINDING = 0;
-
     struct Material {
         glm::vec3 ambient;
         float _ambient;
@@ -38,16 +52,15 @@ public:
         glm::vec3 specular;
         float specular_power;
     };
-    static constexpr int MATERIAL_STORAGE_BINDING = 1;
-
     struct Light {
         glm::vec3 position_w;
         float _position_w;
     };
-    static constexpr int LIGHT_STORAGE_BINDING = 2;
-
-    // same as gl_DrawID
-    static constexpr int DRAW_ID_CONSTANT_LOCATION = 10;
+    struct StorageBinding final {
+        static constexpr int RESOURCE_INDEX = 0;
+        static constexpr int MATERIAL = 1;
+        static constexpr int LIGHT = 2;
+    };
 };
 }  // namespace layout
 }  // namespace rtdemo

@@ -105,8 +105,8 @@ bool StaticScene::restore() {
     garie::VertexArrayBuilder vao_builder(vao);
     vao_builder.index_buffer(ibo)
         .vertex_buffer(vbo)
-        .attribute(Layout::POSITION_ATTRIBUTE_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(Layout::Vertex), offsetof(Layout::Vertex, position), 0)
-        .attribute(Layout::NORMAL_ATTRIBUTE_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(Layout::Vertex), offsetof(Layout::Vertex, normal), 0)
+        .attribute(Layout::AttributeLocation::POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(Layout::Vertex), offsetof(Layout::Vertex, position), 0)
+        .attribute(Layout::AttributeLocation::NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(Layout::Vertex), offsetof(Layout::Vertex, normal), 0)
         .build();
 
     garie::Buffer camera_ubo;
@@ -194,12 +194,12 @@ void StaticScene::draw(size_t draw_index) {
     vao_.bind();
 
     // bind uniform buffers
-    camera_ubo_.bind_base(GL_UNIFORM_BUFFER, Layout::CAMERA_UNIFORM_BINDING);
+    camera_ubo_.bind_base(GL_UNIFORM_BUFFER, Layout::UniformBinding::CAMERA);
 
     // bind storage buffers
-    resource_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, Layout::RESOURCE_INDEX_STORAGE_BINDING);
-    material_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, Layout::MATERIAL_STORAGE_BINDING);
-    light_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, Layout::LIGHT_STORAGE_BINDING);
+    resource_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, Layout::StorageBinding::RESOURCE_INDEX);
+    material_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, Layout::StorageBinding::MATERIAL);
+    light_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, Layout::StorageBinding::LIGHT);
 
     // set rasterizer state
     glEnable(GL_CULL_FACE);
@@ -209,7 +209,7 @@ void StaticScene::draw(size_t draw_index) {
         case DrawMode::DRAW: {
             for (size_t i = 0; i < commands_.size(); ++i) {
                 const auto& command = commands_[i];
-                glUniform1ui(Layout::DRAW_ID_CONSTANT_LOCATION, static_cast<GLuint>(i));
+                glUniform1ui(Layout::ConstantLocation::DRAW_ID, static_cast<GLuint>(i));
                 glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, command.index_count, GL_UNSIGNED_SHORT, (const GLvoid*)(command.index_first * sizeof(Layout::Index)), command.instance_count, command.base_vertex, command.base_instance);
             }
             break;
@@ -218,7 +218,7 @@ void StaticScene::draw(size_t draw_index) {
             dio_.bind(GL_DRAW_INDIRECT_BUFFER);
             for (size_t i = 0; i < commands_.size(); ++i) {
                 const auto& command = commands_[i];
-                glUniform1ui(Layout::DRAW_ID_CONSTANT_LOCATION, static_cast<GLuint>(i));
+                glUniform1ui(Layout::ConstantLocation::DRAW_ID, static_cast<GLuint>(i));
                 glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_SHORT, (const void*)(i * sizeof(Command)));
             }
             glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
