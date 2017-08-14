@@ -1,4 +1,5 @@
 #version 450
+
 struct Material {
     vec3 ambient;
     vec3 diffuse;
@@ -11,6 +12,7 @@ struct Light {
 
 layout(binding = 0) uniform Camera {
     mat4 view_proj;
+    mat4 view_proj_inv;
     vec3 position_w;
 } CAMERA;
 layout(binding = 0) buffer ResourceIndexBuffer {
@@ -26,7 +28,6 @@ layout(binding = 2) buffer LightBuffer {
 in VertexData {
     layout(location = 0) vec3 position_w;
     layout(location = 1) vec3 normal_w;
-    // layout(location = 2) flat uint draw_id;
 } IN;
 layout(location = 10) uniform uint draw_id; // HACK
 layout(location = 0) out vec4 frag_color;
@@ -41,7 +42,10 @@ void main() {
 
     vec3 final_color =
         MATERIAL.ambient
-        + MATERIAL.diffuse * max(0, dot(n, l))
-        + MATERIAL.specular * pow(max(0, dot(v, r)), MATERIAL.specular_power);
+        +
+        MATERIAL.diffuse * max(0, dot(n, l))
+        +
+        MATERIAL.specular * pow(max(0, dot(v, r)), MATERIAL.specular_power)
+        ;
     frag_color = vec4(final_color, 1);
 }

@@ -11,6 +11,7 @@ layout(location = 10) uniform uint DRAW_ID; // HACK
 
 layout(binding = 0) uniform Camera {
     mat4 view_proj;
+    mat4 view_proj_inv;
     vec3 position_w;
 } CAMERA;
 
@@ -33,7 +34,7 @@ layout(location = 3) out vec4 frag_color3;
 void main() {
     Material MATERIAL = MATERIALS[RESOURCE_INDICES[DRAW_ID]];
 
-    frag_color0.rgb = normalize(IN.normal_w);
+    frag_color0.rgb = normalize(IN.normal_w) * 0.5 + vec3(0.5);
     frag_color0.a = 1.f;
     frag_color1.rgb = MATERIAL.ambient;
     frag_color1.a = 1.f;

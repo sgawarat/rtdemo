@@ -8,24 +8,24 @@
 namespace rtdemo {
 namespace tech {
 class ForwardShading : public Technique {
-public:
-    using Layout = layout::StaticLayout;
+ public:
+  using Layout = layout::StaticLayout;
 
-    ~ForwardShading() noexcept override {}
+  ~ForwardShading() noexcept override {}
 
-    bool restore() override;
+  bool restore() override;
 
-    bool invalidate() override;
+  bool invalidate() override;
 
-    void update() override;
+  void update() override;
 
-    void update_gui() override;
+  void update_gui() override;
 
-    void apply(scene::Scene* scene) override;
+  void apply(scene::Scene* scene) override;
 
-private:
-    garie::Program prog_;
-    std::string log_;
+ private:
+  garie::Program prog_;
+  std::string log_;
 };
 }  // namespace tech
 }  // namespace rtdemo

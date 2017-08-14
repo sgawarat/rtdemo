@@ -4,9 +4,38 @@
 
 ### OpenGL
 
+#### 描画
+
+##### 深度テストと深度書き込みを有効にすると、オブジェクトが描画されない。
+
+- 毎フレームで深度バッファをクリアしてみる。
+    - 深度バッファがクリアされないと、最も小さい深度値が蓄積してしまい、シーン全体が深度テストに失敗するようになる。
+    - 深度バッファを正しくクリアするには`glDepthMask`を`GL_TRUE`にするのを忘れないこと。
+
+#### フレームバッファ
+
+##### glClearでフレームバッファを初期化できない。
+
+- `gl[Color|Depth|Stencil]Mask`を`GL_TRUE`にしてみる。
+    - `glClear`も書き込みマスクの影響を受ける。
+
 #### バッファ
 
-##### `glBindBufferRange`でバインドしたUBOがシェーダから見えない。
+##### `glBindBufferRange`でバインドしたバッファがシェーダから見えない。
 
-- UBOの`glBindBufferRange`の`offset`は、`GL_*_BUFFER_OFFSET_ALIGNMENT`の値の倍数でなければならない。― [OpenGL Wiki](https://www.khronos.org/opengl/wiki/Uniform_Buffer_Object#Limitations)
 - 構造体のサイズを大きめの2の倍数(256や512)になるよう調整してみる。
+    - `glBindBufferRange`の`offset`は、`GL_*_BUFFER_OFFSET_ALIGNMENT`の値の倍数でなければならない。― [OpenGL Wiki](https://www.khronos.org/opengl/wiki/Uniform_Buffer_Object#Limitations)
+
+##### 頂点バッファやインデックスバッファに対する操作が正常に行われない。
+
+- 頂点バッファやインデックスバッファを操作するときにVAOをバインドしてみる。
+    - CoreプロファイルではVAOが必須である。― [Modern OpenGL](http://github.prideout.net/modern-opengl-prezo/)
+    - Compatibilityプロファイルでは0番のVAOがデフォルトで用意されるため、VAOを明示しなくても動作する。
+
+#### バインディング
+
+##### 前回起動時のバインディング番号が反映されてしまう。
+
+- バインドするすべてのリソースが、シェーダの要求するサイズを満たしているかを確認してみる。
+    - この不具合に遭遇したときは、不具合が出た箇所より前にバインドされていた、シェーダの要求サイズより小さかったUBOのサイズを大きくすると解消された。
+    - ドライバのキャッシュ機構が悪さした？

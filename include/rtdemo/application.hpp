@@ -1,14 +1,12 @@
 #pragma once
 
-#include <vector>
-
 namespace rtdemo {
 class Application final {
-public:
-    bool init();
+ public:
+  bool init();
 
-    void update();
+  void update();
 
-private:
+ private:
 };
 }  // namespace rtdemo

@@ -4,7 +4,8 @@
 namespace rtdemo {
 // RT_MANAGED_LAYOUT_INSTACE(layout, StaticLayout);
 namespace {
-::rtdemo::ManagedLayout<layout::StaticLayout> MANAGED_LAYOUT_INSTANCE_StaticLayout {"StaticLayout"};
+::rtdemo::ManagedLayout<layout::StaticLayout>
+    MANAGED_LAYOUT_INSTANCE_StaticLayout{"StaticLayout"};
 }
 
 namespace layout {

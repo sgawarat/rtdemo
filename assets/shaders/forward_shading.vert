@@ -1,8 +1,8 @@
 #version 450
-// #extension GL_ARB_shader_draw_parameters : require
 
 layout(binding = 0) uniform Camera {
     mat4 view_proj;
+    mat4 view_proj_inv;
     vec3 position_w;
 } CAMERA;
 
@@ -12,12 +12,12 @@ layout(location = 1) in vec3 normal;
 out VertexData {
     layout(location = 0) vec3 position_w;
     layout(location = 1) vec3 normal_w;
-    // layout(location = 2) uint draw_id;
 } OUT;
 
 void main() {
+    vec4 position_c = CAMERA.view_proj * vec4(position, 1);
+
     OUT.position_w = position;
     OUT.normal_w = normal;
-    // OUT.draw_id = IN.gl_DrawID;
-    gl_Position = CAMERA.view_proj * vec4(position, 1);
+    gl_Position = position_c;
 }
