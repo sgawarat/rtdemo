@@ -42,25 +42,26 @@ bool DeferredShading::restore() {
   ds_tex.bind(GL_TEXTURE_2D);
   glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, 1280, 720);
 
+  const GLenum format = GL_RGBA8;
   garie::Texture g0_tex;
   g0_tex.gen();
   g0_tex.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, 1280, 720);
+  glTexStorage2D(GL_TEXTURE_2D, 1, format, 1280, 720);
 
   garie::Texture g1_tex;
   g1_tex.gen();
   g1_tex.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, 1280, 720);
+  glTexStorage2D(GL_TEXTURE_2D, 1, format, 1280, 720);
 
   garie::Texture g2_tex;
   g2_tex.gen();
   g2_tex.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, 1280, 720);
+  glTexStorage2D(GL_TEXTURE_2D, 1, format, 1280, 720);
 
   garie::Texture g3_tex;
   g3_tex.gen();
   g3_tex.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, 1280, 720);
+  glTexStorage2D(GL_TEXTURE_2D, 1, format, 1280, 720);
 
   garie::Framebuffer fbo = garie::FramebufferBuilder()
                                  .depthstencil_texture(ds_tex)
@@ -71,8 +72,8 @@ bool DeferredShading::restore() {
                                  .build();
 
   garie::Sampler ss = garie::SamplerBuilder()
-        .min_filter(GL_LINEAR)
-        .mag_filter(GL_LINEAR)
+        .min_filter(GL_NEAREST)
+        .mag_filter(GL_NEAREST)
         .build();
 
   if (!detail::screen_quad_vao()) {
@@ -113,6 +114,7 @@ void DeferredShading::update() {}
 
 void DeferredShading::update_gui() {
   ImGui::TextWrapped("%s", log_.c_str());
+  ImGui::Combo("debug view", &debug_view_, "Default\0Normal\0Ambient\0Diffuse\0Specular\0SpecularPower\0Position\0");
 }
 
 void DeferredShading::apply(scene::Scene* scene) {
@@ -135,7 +137,7 @@ void DeferredShading::apply(scene::Scene* scene) {
   // Geometry pass
   p0_prog_.use();
   detail::default_rs().apply();
-  detail::alpha_blending_bs().apply();
+  detail::default_bs().apply();
   detail::depth_test_dss().apply();
   if (scene) {
     scene->apply(Layout::ResourcePass::ALL);
@@ -144,6 +146,7 @@ void DeferredShading::apply(scene::Scene* scene) {
 
   // Lighting pass
   p1_prog_.use();
+  glUniform1i(11, debug_view_);
   ds_tex_.active(0, GL_TEXTURE_2D);
   ss_.bind(0);
   g0_tex_.active(1, GL_TEXTURE_2D);

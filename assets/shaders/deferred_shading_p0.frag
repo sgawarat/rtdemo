@@ -35,11 +35,11 @@ void main() {
     Material MATERIAL = MATERIALS[RESOURCE_INDICES[DRAW_ID]];
 
     frag_color0.rgb = normalize(IN.normal_w) * 0.5 + vec3(0.5);
-    frag_color0.a = 1.f;
+    frag_color0.a = 0.f;
     frag_color1.rgb = MATERIAL.ambient;
-    frag_color1.a = 1.f;
+    frag_color1.a = 0.f;
     frag_color2.rgb = MATERIAL.diffuse;
-    frag_color2.a = 1.f;
+    frag_color2.a = 0.f;
     frag_color3.rgb = MATERIAL.specular;
-    frag_color3.a = MATERIAL.specular_power / 10.f;
+    frag_color3.a = log2(MATERIAL.specular_power) / 10.5;
 }

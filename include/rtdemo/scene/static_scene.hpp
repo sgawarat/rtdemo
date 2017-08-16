@@ -39,6 +39,7 @@ class StaticScene : public Scene {
     GLuint base_instance;
   };
 
+  float camera_center_ = 0.f;
   float camera_distance_ = 0.f;
   float camera_yaw_ = 0.f;
   float camera_pitch_ = 0.f;

@@ -34,6 +34,7 @@ class DeferredShading : public Technique {
   garie::Framebuffer fbo_;
   garie::Sampler ss_;
   std::string log_;
+  int debug_view_ = 0;
 };
 }  // namespace tech
 }  // namespace rtdemo

@@ -27,6 +27,7 @@ void draw_screen_quad();
 
 const garie::RasterizationState& default_rs();
 
+const garie::ColorBlendState& default_bs();
 const garie::ColorBlendState& alpha_blending_bs();
 const garie::ColorBlendState& additive_bs();
 

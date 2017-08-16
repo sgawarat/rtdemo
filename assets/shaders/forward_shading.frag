@@ -33,19 +33,23 @@ layout(location = 10) uniform uint draw_id; // HACK
 layout(location = 0) out vec4 frag_color;
 void main() {
     Material MATERIAL = MATERIALS[RESOURCE_INDICES[draw_id]];
-    Light LIGHT = LIGHTS[0];
 
-    vec3 l = normalize(LIGHT.position_w - IN.position_w);
     vec3 v = normalize(CAMERA.position_w - IN.position_w);
     vec3 n = normalize(IN.normal_w);
-    vec3 r = reflect(-l, n);
 
-    vec3 final_color =
-        MATERIAL.ambient
-        +
-        MATERIAL.diffuse * max(0, dot(n, l))
-        +
-        MATERIAL.specular * pow(max(0, dot(v, r)), MATERIAL.specular_power)
-        ;
+    vec3 final_color = vec3(0);//MATERIAL.ambient;
+    int lights_length = LIGHTS.length();
+    for (int i = 0; i < lights_length; ++i) {
+        Light LIGHT = LIGHTS[i];
+
+        vec3 l = normalize(LIGHT.position_w - IN.position_w);
+        vec3 r = reflect(-l, n);
+
+        final_color +=
+            MATERIAL.diffuse * max(0, dot(n, l))
+            +
+            MATERIAL.specular * pow(max(0, dot(v, r)), MATERIAL.specular_power)
+            ;
+    }
     frag_color = vec4(final_color, 1);
 }

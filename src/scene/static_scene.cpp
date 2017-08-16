@@ -12,10 +12,11 @@ RT_MANAGED_SCENE_INSTANCE(scene, StaticScene);
 
 namespace scene {
 bool StaticScene::restore() {
+  // const char* scene_path = "assets/scenes/cornellbox/CornellBox-Original.obj";
+  const char* scene_path = "assets/scenes/test/untitled.obj";
   Assimp::Importer importer;
   const aiScene* scene =
-      importer.ReadFile("assets/scenes/cornellbox/CornellBox-Original.obj",
-                        aiProcess_Triangulate | aiProcess_GenNormals);
+      importer.ReadFile(scene_path, aiProcess_Triangulate | aiProcess_GenNormals);
 
   // copy all draw data
   size_t total_vertex_count = 0;
@@ -84,11 +85,22 @@ bool StaticScene::restore() {
   }
 
   // copy all light data
-  std::vector<Layout::Light> lights;
-  lights.reserve(1);
+   std::vector<Layout::Light> lights;
+  lights.reserve(2);
   lights.push_back(Layout::Light{
-      {0.f, 2.f, 0.f},
+      {0.f, 5.f, 0.f},
   });
+  lights.push_back(Layout::Light{
+    {8.f, 1.f, 8.f},
+});
+// lights.reserve(scene->mNumLights);
+  // for (size_t i = 0; i < scene->mNumLights; ++i) {
+  //   const aiLight* light = scene->mLights[i];
+  //   const auto& p = light->mPosition;
+  //   lights.push_back(Layout::Light{
+  //     {p.x, p.y, p.z},
+  //   });
+  // }
 
   // create OpenGL resources
   garie::Buffer vbo;
@@ -145,9 +157,10 @@ bool StaticScene::restore() {
                   commands.data(), 0);
 
   // finalize
-  camera_distance_ = 5.f;
+  camera_center_ = 0.f;
+  camera_distance_ = 10.f;
   camera_yaw_ = 0.f;
-  camera_pitch_ = 0.f;
+  camera_pitch_ = glm::radians(-45.f);
   draw_mode_ = DrawMode::DRAW;
 
   vao_ = std::move(vao);
@@ -183,7 +196,7 @@ void StaticScene::update() {
   const glm::vec3 eye = rot * glm::vec3(0.f, 0.f, camera_distance_);
   const glm::vec3 front = rot * glm::vec3(0.f, 0.f, -1.f);
   const glm::vec3 up = rot * glm::vec3(0.f, 1.f, 0.f);
-  const glm::mat4 view = glm::lookAt(eye, glm::vec3(), up);
+  const glm::mat4 view = glm::lookAt(eye, glm::vec3(0.f, camera_center_, 0.f), up);
   const glm::mat4 view_proj = proj * view;
 
   // update camera
@@ -199,10 +212,11 @@ void StaticScene::update() {
 }
 
 void StaticScene::update_gui() {
-  ImGui::DragFloat("distance", &camera_distance_, 0.01f, 0.01f, 10.f);
+  ImGui::DragFloat("center", &camera_center_, 0.01f, -20.f, 20.f);
+  ImGui::DragFloat("distance", &camera_distance_, 0.01f, 0.01f, 20.f);
   ImGui::SliderAngle("yaw", &camera_yaw_, -180.f, 180.f);
   ImGui::SliderAngle("pitch", &camera_pitch_, -90.f, 90.f);
-  ImGui::DragFloat("depth", &lens_depth_, 0.01f, 0.01f, 100.f);
+  ImGui::DragFloat("depth", &lens_depth_, 0.01f, 0.01f, 30.f);
   ImGui::Combo("draw mode", reinterpret_cast<int*>(&draw_mode_),
                "DRAW\0DRAW_INDIRECT\0\0");
 }

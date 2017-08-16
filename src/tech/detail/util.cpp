@@ -94,6 +94,11 @@ const garie::RasterizationState& default_rs() {
   return rs;
 }
 
+const garie::ColorBlendState& default_bs() {
+  static garie::ColorBlendState bs;
+  return bs;
+}
+
 const garie::ColorBlendState& alpha_blending_bs() {
   static garie::ColorBlendState bs =
       garie::ColorBlendStateBuilder()
