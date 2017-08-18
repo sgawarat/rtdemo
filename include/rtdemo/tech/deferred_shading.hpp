@@ -2,15 +2,12 @@
 
 #include <string>
 #include <rtdemo/garie.hpp>
-#include <rtdemo/layout/static_layout.hpp>
-#include <rtdemo/tech/technique.hpp>
+#include "technique.hpp"
 
 namespace rtdemo {
 namespace tech {
-class DeferredShading : public Technique {
+class DeferredShading final : public Technique {
  public:
-  using Layout = layout::StaticLayout;
-
   ~DeferredShading() noexcept override {}
 
   bool restore() override;
@@ -24,6 +21,17 @@ class DeferredShading : public Technique {
   void apply(scene::Scene* scene) override;
 
  private:
+  enum class DebugView : int {
+    DEFAULT,
+    DEPTH,
+    NORMAL,
+    AMBIENT,
+    DIFFUSE,
+    SPECULAR,
+    SPECULAR_POWER,
+    RECONSTRUCTED_POSITION,
+  };
+
   garie::Program p0_prog_;
   garie::Program p1_prog_;
   garie::Texture ds_tex_;
@@ -33,8 +41,8 @@ class DeferredShading : public Technique {
   garie::Texture g3_tex_;
   garie::Framebuffer fbo_;
   garie::Sampler ss_;
+  DebugView debug_view_ = DebugView::DEFAULT;
   std::string log_;
-  int debug_view_ = 0;
 };
 }  // namespace tech
 }  // namespace rtdemo

@@ -1,8 +1,10 @@
-#include <rtdemo/tech/detail/util.hpp>
+#include <rtdemo/util.hpp>
+#include <fstream>
+#include <vector>
+#include <rtdemo/logging.hpp>
 
 namespace rtdemo {
-namespace tech {
-namespace detail {
+namespace util {
 template <GLenum TYPE>
 garie::Shader<TYPE> compile_shader_from_file(const char* path,
                                              std::string* log_ptr) {
@@ -59,7 +61,39 @@ garie::Program link_program(const garie::VertexShader& vert,
   return prog;
 }
 
-// ScreenQuad geometry for common use
+const garie::VertexArray& light_quad_vao() {
+  static garie::VertexArray vao_;
+  static garie::Buffer vbo_;
+  if (!vao_) {
+    garie::Buffer vbo;
+    vbo.gen();
+    vbo.bind(GL_ARRAY_BUFFER);
+    const float vertices[] = {
+        1.f, 1.f,
+        -1.f, -1.f,
+        1.f, -1.f,
+        -1.f, -1.f,
+        1.f, 1.f,
+        -1.f, 1.f,
+    };
+    glBufferStorage(GL_ARRAY_BUFFER, sizeof(vertices), vertices, 0);
+
+    garie::VertexArray vao = garie::VertexArrayBuilder()
+                                 .vertex_buffer(vbo)
+                                 .attribute(0, 2, GL_FLOAT, GL_FALSE, 8, 0, 0)
+                                 .build();
+
+    vao_ = std::move(vao);
+    vbo_ = std::move(vbo);
+  }
+  return vao_;
+}
+
+void draw_light_quad() {
+  light_quad_vao().bind();
+  glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
 const garie::VertexArray& screen_quad_vao() {
   static garie::VertexArray vao_;
   static garie::Buffer vbo_;
@@ -84,6 +118,7 @@ const garie::VertexArray& screen_quad_vao() {
 }
 
 void draw_screen_quad() {
+  screen_quad_vao().bind();
   glEnable(GL_SCISSOR_TEST);
   glScissor(0, 0, 1280, 720);
   glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -132,6 +167,5 @@ const garie::DepthStencilState& depth_test_dss() {
           .build();
   return dss;
 }
-}  // namespace detail
-}  // namespace tech
+}  // namespace util
 }  // namespace rtdemo

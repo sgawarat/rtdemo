@@ -14,11 +14,10 @@ add_executable(rendering_techniques
     src/application.cpp
     src/gui.cpp
     src/logging.cpp
-    src/layout/static_layout.cpp
+    src/util.cpp
     src/scene/static_scene.cpp
     src/tech/forward_shading.cpp
     src/tech/deferred_shading.cpp
-    src/tech/detail/util.cpp
     libs/imgui/imgui.cpp
     libs/imgui/imgui_draw.cpp
 )

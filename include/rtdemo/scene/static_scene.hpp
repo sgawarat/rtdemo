@@ -1,16 +1,13 @@
 #pragma once
 
 #include <vector>
-#include <rtdemo/garie.hpp>
-#include <rtdemo/layout/static_layout.hpp>
-#include <rtdemo/scene/scene.hpp>
+#include "../garie.hpp"
+#include "scene.hpp"
 
 namespace rtdemo {
 namespace scene {
-class StaticScene : public Scene {
+class StaticScene final : public Scene {
  public:
-  using Layout = layout::StaticLayout;
-
   ~StaticScene() noexcept override {}
 
   bool restore() override;
@@ -21,9 +18,7 @@ class StaticScene : public Scene {
 
   void update_gui() override;
 
-  void apply(size_t pass) override;
-
-  void draw(size_t pass) override;
+  void draw(PassType type) override;
 
  private:
   enum class DrawMode : int {
@@ -53,6 +48,7 @@ class StaticScene : public Scene {
   garie::Buffer resource_index_ssbo_;
   garie::Buffer material_ssbo_;
   garie::Buffer light_ssbo_;
+  size_t light_count_ = 0;
   garie::Buffer dio_;
   std::vector<Command> commands_;
 };

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
-#include <rtdemo/garie.hpp>
 #include <imgui.h>
+#include "garie.hpp"
 
 namespace rtdemo {
 namespace gui {

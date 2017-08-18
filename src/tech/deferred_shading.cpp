@@ -4,7 +4,7 @@
 #include <imgui.h>
 #include <rtdemo/logging.hpp>
 #include <rtdemo/managed.hpp>
-#include <rtdemo/tech/detail/util.hpp>
+#include <rtdemo/util.hpp>
 
 namespace rtdemo {
 RT_MANAGED_TECHNIQUE_INSTANCE(tech, DeferredShading);
@@ -12,29 +12,29 @@ RT_MANAGED_TECHNIQUE_INSTANCE(tech, DeferredShading);
 namespace tech {
 bool DeferredShading::restore() {
   garie::VertexShader p0_vert =
-      detail::compile_shader_from_file<GL_VERTEX_SHADER>(
+      util::compile_shader_from_file<GL_VERTEX_SHADER>(
           "assets/shaders/deferred_shading_p0.vert", &log_);
   if (!p0_vert) return false;
 
   garie::VertexShader p1_vert =
-      detail::compile_shader_from_file<GL_VERTEX_SHADER>(
+      util::compile_shader_from_file<GL_VERTEX_SHADER>(
           "assets/shaders/deferred_shading_p1.vert", &log_);
   if (!p1_vert) return false;
 
   garie::FragmentShader p0_frag =
-      detail::compile_shader_from_file<GL_FRAGMENT_SHADER>(
+  util::compile_shader_from_file<GL_FRAGMENT_SHADER>(
           "assets/shaders/deferred_shading_p0.frag", &log_);
   if (!p0_frag) return false;
 
   garie::FragmentShader p1_frag =
-      detail::compile_shader_from_file<GL_FRAGMENT_SHADER>(
+  util::compile_shader_from_file<GL_FRAGMENT_SHADER>(
           "assets/shaders/deferred_shading_p1.frag", &log_);
   if (!p1_frag) return false;
 
-  garie::Program p0_prog = detail::link_program(p0_vert, p0_frag, &log_);
+  garie::Program p0_prog = util::link_program(p0_vert, p0_frag, &log_);
   if (!p0_prog) return false;
 
-  garie::Program p1_prog = detail::link_program(p1_vert, p1_frag, &log_);
+  garie::Program p1_prog = util::link_program(p1_vert, p1_frag, &log_);
   if (!p1_prog) return false;
 
   garie::Texture ds_tex;
@@ -76,7 +76,7 @@ bool DeferredShading::restore() {
         .mag_filter(GL_NEAREST)
         .build();
 
-  if (!detail::screen_quad_vao()) {
+  if (!util::screen_quad_vao()) {
     log_ = "failed to init screen-quad geometry";
     RT_LOG(error, "Failed to init screen-quad");
     return false;
@@ -92,6 +92,7 @@ bool DeferredShading::restore() {
   g3_tex_ = std::move(g3_tex);
   fbo_ = std::move(fbo);
   ss_ = std::move(ss);
+  //debug_view_ = DebugView::DEFAULT;
   log_ = "succeeded";
   return true;
 }
@@ -113,8 +114,10 @@ bool DeferredShading::invalidate() {
 void DeferredShading::update() {}
 
 void DeferredShading::update_gui() {
+  ImGui::Begin("DeferredShading");
+  ImGui::Combo("debug view", reinterpret_cast<int*>(&debug_view_), "Default\0Depth\0Normal\0Ambient\0Diffuse\0Specular\0SpecularPower\0Reconstructed position\0");
   ImGui::TextWrapped("%s", log_.c_str());
-  ImGui::Combo("debug view", &debug_view_, "Default\0Normal\0Ambient\0Diffuse\0Specular\0SpecularPower\0Position\0");
+  ImGui::End();
 }
 
 void DeferredShading::apply(scene::Scene* scene) {
@@ -136,17 +139,14 @@ void DeferredShading::apply(scene::Scene* scene) {
 
   // Geometry pass
   p0_prog_.use();
-  detail::default_rs().apply();
-  detail::default_bs().apply();
-  detail::depth_test_dss().apply();
-  if (scene) {
-    scene->apply(Layout::ResourcePass::ALL);
-    scene->draw(Layout::DrawPass::GEOMETRIES);
-  }
+  util::default_rs().apply();
+  util::default_bs().apply();
+  util::depth_test_dss().apply();
+  if (scene) scene->draw(scene::PassType::SHADE);
 
   // Lighting pass
   p1_prog_.use();
-  glUniform1i(11, debug_view_);
+  glUniform1i(11, static_cast<int>(debug_view_));
   ds_tex_.active(0, GL_TEXTURE_2D);
   ss_.bind(0);
   g0_tex_.active(1, GL_TEXTURE_2D);
@@ -157,16 +157,19 @@ void DeferredShading::apply(scene::Scene* scene) {
   ss_.bind(3);
   g3_tex_.active(4, GL_TEXTURE_2D);
   ss_.bind(4);
-  detail::default_rs().apply();
-  detail::additive_bs().apply();
-  detail::default_dss().apply();
+  util::default_rs().apply();
+  util::additive_bs().apply();
+  util::default_dss().apply();
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
   const GLenum restored_draw_buffers[] = {
       GL_BACK_LEFT, GL_NONE, GL_NONE, GL_NONE,
   };
   glDrawBuffers(4, restored_draw_buffers);
-  detail::screen_quad_vao().bind();
-  detail::draw_screen_quad();
+  if (debug_view_ == DebugView::DEFAULT) {
+    if (scene) scene->draw(scene::PassType::LIGHT);
+  } else {
+    util::draw_screen_quad();
+  }
 }
 }  // namespace tech
 }  // namespace rtrdemo

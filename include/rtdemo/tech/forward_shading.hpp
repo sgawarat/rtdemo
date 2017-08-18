@@ -2,15 +2,12 @@
 
 #include <string>
 #include <rtdemo/garie.hpp>
-#include <rtdemo/layout/static_layout.hpp>
-#include <rtdemo/tech/technique.hpp>
+#include "technique.hpp"
 
 namespace rtdemo {
 namespace tech {
-class ForwardShading : public Technique {
+class ForwardShading final : public Technique {
  public:
-  using Layout = layout::StaticLayout;
-
   ~ForwardShading() noexcept override {}
 
   bool restore() override;
@@ -24,7 +21,18 @@ class ForwardShading : public Technique {
   void apply(scene::Scene* scene) override;
 
  private:
+  enum class DebugView : int {
+    DEFAULT,
+    POSITION,
+    NORMAL,
+    AMBIENT,
+    DIFFUSE,
+    SPECULAR,
+    SPECULAR_POWER,
+  };
+
   garie::Program prog_;
+  DebugView debug_view_ = DebugView::DEFAULT;
   std::string log_;
 };
 }  // namespace tech

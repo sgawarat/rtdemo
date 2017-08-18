@@ -6,6 +6,8 @@
 #include <assimp/postprocess.h>
 #include <imgui.h>
 #include <rtdemo/managed.hpp>
+#include <rtdemo/types.hpp>
+#include <rtdemo/util.hpp>
 
 namespace rtdemo {
 RT_MANAGED_SCENE_INSTANCE(scene, StaticScene);
@@ -21,13 +23,13 @@ bool StaticScene::restore() {
   // copy all draw data
   size_t total_vertex_count = 0;
   size_t total_index_count = 0;
-  std::vector<Layout::ResourceIndex> resource_indices;
+  std::vector<ResourceIndex> resource_indices;
   std::vector<Command> commands;
   resource_indices.reserve(scene->mNumMeshes);
   commands.reserve(scene->mNumMeshes);
   for (size_t i = 0; i < scene->mNumMeshes; ++i) {
     const aiMesh* mesh = scene->mMeshes[i];
-    resource_indices.push_back(Layout::ResourceIndex{
+    resource_indices.push_back(ResourceIndex{
         mesh->mMaterialIndex,
     });
     commands.push_back(Command{
@@ -40,8 +42,8 @@ bool StaticScene::restore() {
   }
 
   // copy all mesh data
-  std::vector<Layout::Vertex> vertices;
-  std::vector<Layout::Index> indices;
+  std::vector<VertexP3N3> vertices;
+  std::vector<uint16_t> indices;
   vertices.reserve(total_vertex_count);
   indices.reserve(total_index_count);
   for (size_t mesh_i = 0; mesh_i < scene->mNumMeshes; ++mesh_i) {
@@ -49,20 +51,20 @@ bool StaticScene::restore() {
     for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
       const auto& p = mesh->mVertices[i];
       const auto& n = mesh->mNormals[i];
-      vertices.push_back(Layout::Vertex{
+      vertices.push_back(VertexP3N3{
           {p.x, p.y, p.z}, {n.x, n.y, n.z},
       });
     }
     for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
       const auto& face = mesh->mFaces[i];
-      indices.push_back(static_cast<Layout::Index>(face.mIndices[0]));
-      indices.push_back(static_cast<Layout::Index>(face.mIndices[1]));
-      indices.push_back(static_cast<Layout::Index>(face.mIndices[2]));
+      indices.push_back(static_cast<uint16_t>(face.mIndices[0]));
+      indices.push_back(static_cast<uint16_t>(face.mIndices[1]));
+      indices.push_back(static_cast<uint16_t>(face.mIndices[2]));
     }
   }
 
   // copy all material data
-  std::vector<Layout::Material> materials;
+  std::vector<Material> materials;
   materials.reserve(scene->mNumMaterials);
   for (size_t i = 0; i < scene->mNumMaterials; ++i) {
     const aiMaterial* material = scene->mMaterials[i];
@@ -74,7 +76,7 @@ bool StaticScene::restore() {
     material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
     material->Get(AI_MATKEY_COLOR_SPECULAR, specular);
     material->Get(AI_MATKEY_SHININESS, shininess);
-    materials.push_back(Layout::Material{
+    materials.push_back(Material{
         {ambient.r, ambient.g, ambient.b},
         {},
         {diffuse.r, diffuse.g, diffuse.b},
@@ -85,14 +87,20 @@ bool StaticScene::restore() {
   }
 
   // copy all light data
-   std::vector<Layout::Light> lights;
+   std::vector<PointLight> lights;
   lights.reserve(2);
-  lights.push_back(Layout::Light{
+  lights.push_back(PointLight{
       {0.f, 5.f, 0.f},
+      1.f,
+      {1.f, 1.f, 1.f},
+      7.f,
   });
-  lights.push_back(Layout::Light{
-    {8.f, 1.f, 8.f},
-});
+//   lights.push_back(PointLight{
+//     {8.f, 1.f, 8.f},
+//     1.f,
+//     {1.f, 1.f, 1.f},
+//     5.f,
+// });
 // lights.reserve(scene->mNumLights);
   // for (size_t i = 0; i < scene->mNumLights; ++i) {
   //   const aiLight* light = scene->mLights[i];
@@ -106,49 +114,49 @@ bool StaticScene::restore() {
   garie::Buffer vbo;
   vbo.gen();
   vbo.bind(GL_ARRAY_BUFFER);
-  glBufferStorage(GL_ARRAY_BUFFER, vertices.size() * sizeof(Layout::Vertex),
+  glBufferStorage(GL_ARRAY_BUFFER, vertices.size() * sizeof(VertexP3N3),
                   vertices.data(), 0);
 
   garie::Buffer ibo;
   ibo.gen();
   ibo.bind(GL_ELEMENT_ARRAY_BUFFER);
   glBufferStorage(GL_ELEMENT_ARRAY_BUFFER,
-                  indices.size() * sizeof(Layout::Index), indices.data(), 0);
+                  indices.size() * sizeof(uint16_t), indices.data(), 0);
 
   garie::VertexArray vao = garie::VertexArrayBuilder()
       .index_buffer(ibo)
       .vertex_buffer(vbo)
-      .attribute(Layout::AttributeLocation::POSITION, 3, GL_FLOAT, GL_FALSE,
-                 sizeof(Layout::Vertex), offsetof(Layout::Vertex, position), 0)
-      .attribute(Layout::AttributeLocation::NORMAL, 3, GL_FLOAT, GL_FALSE,
-                 sizeof(Layout::Vertex), offsetof(Layout::Vertex, normal), 0)
+      .attribute(0, 3, GL_FLOAT, GL_FALSE,
+                 sizeof(VertexP3N3), offsetof(VertexP3N3, position), 0)
+      .attribute(1, 3, GL_FLOAT, GL_FALSE,
+                 sizeof(VertexP3N3), offsetof(VertexP3N3, normal), 0)
       .build();
 
   garie::Buffer camera_ubo;
   camera_ubo.gen();
   camera_ubo.bind(GL_UNIFORM_BUFFER);
   glBufferStorage(
-      GL_UNIFORM_BUFFER, sizeof(Layout::Camera), nullptr, GL_MAP_WRITE_BIT);
+      GL_UNIFORM_BUFFER, sizeof(Camera), nullptr, GL_MAP_WRITE_BIT);
 
   garie::Buffer resource_index_ssbo;
   resource_index_ssbo.gen();
   resource_index_ssbo.bind(GL_SHADER_STORAGE_BUFFER);
   glBufferStorage(GL_SHADER_STORAGE_BUFFER,
-                  resource_indices.size() * sizeof(Layout::ResourceIndex),
+                  resource_indices.size() * sizeof(ResourceIndex),
                   resource_indices.data(), 0);
 
   garie::Buffer material_ssbo;
   material_ssbo.gen();
   material_ssbo.bind(GL_SHADER_STORAGE_BUFFER);
   glBufferStorage(GL_SHADER_STORAGE_BUFFER,
-                  materials.size() * sizeof(Layout::Material), materials.data(),
+                  materials.size() * sizeof(Material), materials.data(),
                   0);
 
   garie::Buffer light_ssbo;
   light_ssbo.gen();
   light_ssbo.bind(GL_SHADER_STORAGE_BUFFER);
   glBufferStorage(GL_SHADER_STORAGE_BUFFER,
-                  lights.size() * sizeof(Layout::Light), lights.data(), 0);
+                  lights.size() * sizeof(PointLight), lights.data(), 0);
 
   garie::Buffer dio;
   dio.gen();
@@ -170,6 +178,7 @@ bool StaticScene::restore() {
   resource_index_ssbo_ = std::move(resource_index_ssbo);
   material_ssbo_ = std::move(material_ssbo);
   light_ssbo_ = std::move(light_ssbo);
+  light_count_ = lights.size();
   dio_ = std::move(dio);
   commands_ = std::move(commands);
   return true;
@@ -183,6 +192,7 @@ bool StaticScene::invalidate() {
   resource_index_ssbo_ = garie::Buffer();
   material_ssbo_ = garie::Buffer();
   light_ssbo_ = garie::Buffer();
+  light_count_ = 0;
   dio_ = garie::Buffer();
   commands_.clear();
   return true;
@@ -201,17 +211,20 @@ void StaticScene::update() {
 
   // update camera
   camera_ubo_.bind(GL_UNIFORM_BUFFER);
-  Layout::Camera* mapped_camera_ubo =
-  reinterpret_cast<Layout::Camera*>(glMapBufferRange(
-      GL_UNIFORM_BUFFER, 0, sizeof(Layout::Camera),
+  Camera* mapped_camera_ubo =
+  reinterpret_cast<Camera*>(glMapBufferRange(
+      GL_UNIFORM_BUFFER, 0, sizeof(Camera),
       GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
   mapped_camera_ubo->view_proj = view_proj;
+  mapped_camera_ubo->view = view;
+  mapped_camera_ubo->proj = proj;
   mapped_camera_ubo->view_proj_inv = glm::inverse(view_proj);
   mapped_camera_ubo->position_w = eye;
   glUnmapBuffer(GL_UNIFORM_BUFFER);
 }
 
 void StaticScene::update_gui() {
+  ImGui::Begin("StaticScene");
   ImGui::DragFloat("center", &camera_center_, 0.01f, -20.f, 20.f);
   ImGui::DragFloat("distance", &camera_distance_, 0.01f, 0.01f, 20.f);
   ImGui::SliderAngle("yaw", &camera_yaw_, -180.f, 180.f);
@@ -219,47 +232,55 @@ void StaticScene::update_gui() {
   ImGui::DragFloat("depth", &lens_depth_, 0.01f, 0.01f, 30.f);
   ImGui::Combo("draw mode", reinterpret_cast<int*>(&draw_mode_),
                "DRAW\0DRAW_INDIRECT\0\0");
+  ImGui::End();
 }
 
-void StaticScene::apply(size_t draw_index) {
-  // bind uniform buffers
-  camera_ubo_.bind_base(GL_UNIFORM_BUFFER, Layout::UniformBinding::CAMERA);
-  
-  // bind storage buffers
-  resource_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER,
-                                 Layout::StorageBinding::RESOURCE_INDEX);
-  material_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER,
-                           Layout::StorageBinding::MATERIAL);
-  light_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER,
-                        Layout::StorageBinding::LIGHT);
-}
+void StaticScene::draw(PassType type) {
+  switch (type) {
+    case PassType::SHADE: {
+      camera_ubo_.bind_base(GL_UNIFORM_BUFFER, 0);
+      
+      resource_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
+      material_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 1);
+      light_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 2);
 
-void StaticScene::draw(size_t draw_index) {
-  // bind vertex array
-  vao_.bind();
-
-  // draw
-  switch (draw_mode_) {
-    case DrawMode::DRAW: {
-      for (size_t i = 0; i < commands_.size(); ++i) {
-        const auto& command = commands_[i];
-        glUniform1ui(Layout::ConstantLocation::DRAW_ID, static_cast<GLuint>(i));
-        glDrawElementsInstancedBaseVertexBaseInstance(
-            GL_TRIANGLES, command.index_count, GL_UNSIGNED_SHORT,
-            (const GLvoid*)(command.index_first * sizeof(Layout::Index)),
-            command.instance_count, command.base_vertex, command.base_instance);
+      vao_.bind();
+      switch (draw_mode_) {
+        case DrawMode::DRAW: {
+          for (size_t i = 0; i < commands_.size(); ++i) {
+            const auto& command = commands_[i];
+            glUniform1ui(10, static_cast<GLuint>(i));
+            glDrawElementsInstancedBaseVertexBaseInstance(
+                GL_TRIANGLES, command.index_count, GL_UNSIGNED_SHORT,
+                (const GLvoid*)(command.index_first * sizeof(uint16_t)),
+                command.instance_count, command.base_vertex, command.base_instance);
+          }
+          break;
+        }
+        case DrawMode::DRAW_INDIRECT: {
+          dio_.bind(GL_DRAW_INDIRECT_BUFFER);
+          for (size_t i = 0; i < commands_.size(); ++i) {
+            const auto& command = commands_[i];
+            glUniform1ui(10, static_cast<GLuint>(i));
+            glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_SHORT,
+                                  (const void*)(i * sizeof(Command)));
+          }
+          glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+          break;
+        }
+        break;
       }
       break;
     }
-    case DrawMode::DRAW_INDIRECT: {
-      dio_.bind(GL_DRAW_INDIRECT_BUFFER);
-      for (size_t i = 0; i < commands_.size(); ++i) {
-        const auto& command = commands_[i];
-        glUniform1ui(Layout::ConstantLocation::DRAW_ID, static_cast<GLuint>(i));
-        glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_SHORT,
-                               (const void*)(i * sizeof(Command)));
+    case PassType::LIGHT: {
+      camera_ubo_.bind_base(GL_UNIFORM_BUFFER, 0);
+      
+      light_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
+
+      for (size_t i = 0; i < light_count_; ++i) {
+        glUniform1ui(10, static_cast<GLuint>(i));
+        util::draw_light_quad();
       }
-      glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
       break;
     }
   }
