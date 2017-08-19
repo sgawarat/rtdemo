@@ -11,12 +11,12 @@ RT_MANAGED_TECHNIQUE_INSTANCE(tech, ForwardShading);
 
 namespace tech {
 bool ForwardShading::restore() {
-  garie::VertexShader vert = util::compile_shader_from_file<GL_VERTEX_SHADER>(
+  garie::VertexShader vert = util::compile_vertex_shader_from_file(
       "assets/shaders/forward_shading.vert", &log_);
   if (!vert) return false;
 
   garie::FragmentShader frag =
-  util::compile_shader_from_file<GL_FRAGMENT_SHADER>(
+  util::compile_fragment_shader_from_file(
           "assets/shaders/forward_shading.frag", &log_);
   if (!frag) return false;
 
@@ -44,13 +44,14 @@ void ForwardShading::update_gui() {
   ImGui::End();
 }
 
-void ForwardShading::apply(scene::Scene* scene) {
-  if (prog_) prog_.use();
+void ForwardShading::apply(scene::Scene& scene) {
+  prog_.use();
   glUniform1ui(11, static_cast<int>(debug_view_));  
   util::default_rs().apply();
   util::alpha_blending_bs().apply();
   util::depth_test_dss().apply();
-  if (scene) scene->draw(scene::PassType::SHADE);
+  scene.apply(scene::ApplyType::SHADE);
+  scene.draw(scene::DrawType::OPAQUE);
 }
 }  // namespace tech
 }  // namespace rtrdemo

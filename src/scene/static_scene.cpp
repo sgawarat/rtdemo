@@ -235,15 +235,32 @@ void StaticScene::update_gui() {
   ImGui::End();
 }
 
-void StaticScene::draw(PassType type) {
+void StaticScene::apply(ApplyType type) {
   switch (type) {
-    case PassType::SHADE: {
+    case ApplyType::SHADE: {
       camera_ubo_.bind_base(GL_UNIFORM_BUFFER, 0);
       
       resource_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
       material_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 1);
       light_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 2);
+      break;
+    }
+    case ApplyType::NO_SHADE: {
+      camera_ubo_.bind_base(GL_UNIFORM_BUFFER, 0);
+      break;
+    }
+    case ApplyType::LIGHT: {
+      camera_ubo_.bind_base(GL_UNIFORM_BUFFER, 0);
+      
+      light_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
+      break;
+    }
+  }
+}
 
+void StaticScene::draw(DrawType type) {
+  switch (type) {
+    case DrawType::OPAQUE: {
       vao_.bind();
       switch (draw_mode_) {
         case DrawMode::DRAW: {
@@ -272,11 +289,11 @@ void StaticScene::draw(PassType type) {
       }
       break;
     }
-    case PassType::LIGHT: {
-      camera_ubo_.bind_base(GL_UNIFORM_BUFFER, 0);
-      
-      light_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
-
+    case DrawType::TRANSPARENT: {
+      break;
+    }
+    case DrawType::LIGHT_VOLUME: {
+      util::light_quad_vao().bind();
       for (size_t i = 0; i < light_count_; ++i) {
         glUniform1ui(10, static_cast<GLuint>(i));
         util::draw_light_quad();

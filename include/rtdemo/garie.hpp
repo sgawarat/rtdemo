@@ -78,6 +78,7 @@ class Shader : public Object<Shader<TYPE>> {
 };
 using VertexShader = Shader<GL_VERTEX_SHADER>;
 using FragmentShader = Shader<GL_FRAGMENT_SHADER>;
+using ComputeShader = Shader<GL_COMPUTE_SHADER>;
 
 class Program : public Object<Program> {
  public:

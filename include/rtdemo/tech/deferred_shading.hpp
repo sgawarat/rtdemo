@@ -18,7 +18,7 @@ class DeferredShading final : public Technique {
 
   void update_gui() override;
 
-  void apply(scene::Scene* scene) override;
+  void apply(scene::Scene& scene) override;
 
  private:
   enum class DebugView : int {

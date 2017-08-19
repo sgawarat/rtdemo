@@ -5,8 +5,9 @@
 
 namespace rtdemo {
 namespace util {
+namespace {
 template <GLenum TYPE>
-garie::Shader<TYPE> compile_shader_from_file(const char* path,
+inline garie::Shader<TYPE> compile_shader_from_file(const char* path,
                                              std::string* log_ptr) {
   garie::Shader<TYPE> shader;
 
@@ -40,18 +41,12 @@ garie::Shader<TYPE> compile_shader_from_file(const char* path,
   return shader;
 }
 
-// explicit instantiation
-template
-garie::VertexShader compile_shader_from_file(const char*, std::string*);
-template
-garie::FragmentShader compile_shader_from_file(const char*, std::string*);
-
-garie::Program link_program(const garie::VertexShader& vert,
-                            const garie::FragmentShader& frag,
-                            std::string* log_ptr) {
+template <GLenum... TYPES>
+inline garie::Program link_shader_program(const garie::Shader<TYPES>&... shaders,
+                                   std::string* log_ptr) {
   garie::Program prog;
   prog.gen();
-  if (!prog.link(vert, frag)) {
+  if (!prog.link(shaders...)) {
     static GLchar info_log[1024];
     prog.get_info_log(1024, info_log);
     if (log_ptr) *log_ptr = info_log;
@@ -59,6 +54,31 @@ garie::Program link_program(const garie::VertexShader& vert,
     return garie::Program();
   }
   return prog;
+}
+}  // namespace
+
+garie::VertexShader compile_vertex_shader_from_file(const char* path, std::string* log_ptr) {
+  return compile_shader_from_file<GL_VERTEX_SHADER>(path, log_ptr);
+}
+
+garie::FragmentShader compile_fragment_shader_from_file(const char* path, std::string* log_ptr) {
+  return compile_shader_from_file<GL_FRAGMENT_SHADER>(path, log_ptr);
+}
+
+garie::ComputeShader compile_compute_shader_from_file(const char* path, std::string* log_ptr) {
+  return compile_shader_from_file<GL_COMPUTE_SHADER>(path, log_ptr);
+}
+
+garie::Program link_program(const garie::VertexShader& vert, const garie::FragmentShader& frag, std::string* log_ptr) {
+  return link_shader_program<GL_VERTEX_SHADER, GL_FRAGMENT_SHADER>(vert, frag, log_ptr);
+}
+
+garie::Program link_program(const garie::VertexShader& vert, std::string* log_ptr) {
+  return link_shader_program<GL_VERTEX_SHADER>(vert, log_ptr);
+}
+
+garie::Program link_program(const garie::ComputeShader& comp, std::string* log_ptr) {
+  return link_shader_program<GL_COMPUTE_SHADER>(comp, log_ptr);
 }
 
 const garie::VertexArray& light_quad_vao() {
@@ -90,7 +110,6 @@ const garie::VertexArray& light_quad_vao() {
 }
 
 void draw_light_quad() {
-  light_quad_vao().bind();
   glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
@@ -118,7 +137,6 @@ const garie::VertexArray& screen_quad_vao() {
 }
 
 void draw_screen_quad() {
-  screen_quad_vao().bind();
   glEnable(GL_SCISSOR_TEST);
   glScissor(0, 0, 1280, 720);
   glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -126,6 +144,13 @@ void draw_screen_quad() {
 
 const garie::RasterizationState& default_rs() {
   static garie::RasterizationState rs;
+  return rs;
+}
+
+const garie::RasterizationState& discard_rs() {
+  static garie::RasterizationState rs = garie::RasterizationStateBuilder()
+      .enable_rasterizer_discard()
+      .build();
   return rs;
 }
 
@@ -163,6 +188,15 @@ const garie::DepthStencilState& depth_test_dss() {
       garie::DepthStencilStateBuilder()
           .enable_depth_test(GL_LESS)
           .enable_depth_write()
+          .enable_depth_bounds_test(0.f, 1.f)
+          .build();
+  return dss;
+}
+
+const garie::DepthStencilState& depth_test_no_write_dss() {
+  static garie::DepthStencilState dss =
+      garie::DepthStencilStateBuilder()
+          .enable_depth_test(GL_LEQUAL)
           .enable_depth_bounds_test(0.f, 1.f)
           .build();
   return dss;

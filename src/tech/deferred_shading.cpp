@@ -12,22 +12,22 @@ RT_MANAGED_TECHNIQUE_INSTANCE(tech, DeferredShading);
 namespace tech {
 bool DeferredShading::restore() {
   garie::VertexShader p0_vert =
-      util::compile_shader_from_file<GL_VERTEX_SHADER>(
+      util::compile_vertex_shader_from_file(
           "assets/shaders/deferred_shading_p0.vert", &log_);
   if (!p0_vert) return false;
 
   garie::VertexShader p1_vert =
-      util::compile_shader_from_file<GL_VERTEX_SHADER>(
+      util::compile_vertex_shader_from_file(
           "assets/shaders/deferred_shading_p1.vert", &log_);
   if (!p1_vert) return false;
 
   garie::FragmentShader p0_frag =
-  util::compile_shader_from_file<GL_FRAGMENT_SHADER>(
+  util::compile_fragment_shader_from_file(
           "assets/shaders/deferred_shading_p0.frag", &log_);
   if (!p0_frag) return false;
 
   garie::FragmentShader p1_frag =
-  util::compile_shader_from_file<GL_FRAGMENT_SHADER>(
+  util::compile_fragment_shader_from_file(
           "assets/shaders/deferred_shading_p1.frag", &log_);
   if (!p1_frag) return false;
 
@@ -120,9 +120,7 @@ void DeferredShading::update_gui() {
   ImGui::End();
 }
 
-void DeferredShading::apply(scene::Scene* scene) {
-  if (!p0_prog_ || !p1_prog_) return;
-
+void DeferredShading::apply(scene::Scene& scene) {
   fbo_.bind(GL_DRAW_FRAMEBUFFER);
   const GLenum draw_buffers[] = {
       GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
@@ -142,7 +140,8 @@ void DeferredShading::apply(scene::Scene* scene) {
   util::default_rs().apply();
   util::default_bs().apply();
   util::depth_test_dss().apply();
-  if (scene) scene->draw(scene::PassType::SHADE);
+  scene.apply(scene::ApplyType::SHADE);
+  scene.draw(scene::DrawType::OPAQUE);
 
   // Lighting pass
   p1_prog_.use();
@@ -166,8 +165,10 @@ void DeferredShading::apply(scene::Scene* scene) {
   };
   glDrawBuffers(4, restored_draw_buffers);
   if (debug_view_ == DebugView::DEFAULT) {
-    if (scene) scene->draw(scene::PassType::LIGHT);
+    scene.apply(scene::ApplyType::LIGHT);
+    scene.draw(scene::DrawType::LIGHT_VOLUME);
   } else {
+    util::screen_quad_vao().bind();
     util::draw_screen_quad();
   }
 }

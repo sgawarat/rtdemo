@@ -1,0 +1,37 @@
+#version 450
+
+struct PointLight {
+    vec3 position_w;
+    float intensity;
+    vec3 color;
+    float radius;
+};
+struct GridCell {
+    uint first;
+    uint count;
+};
+
+layout(binding = 0) buffer LightBuffer {
+    PointLight LIGHTS[];
+};
+
+layout(binding = 20) buffer LightGridBuffer {
+    GridCell GRID_CELLS[];
+};
+layout(binding = 21) buffer LightIndexBuffer {
+    uint LIGHT_INDICES[];
+};
+
+// in uvec3 gl_NumWorkGroups;
+// in uvec3 gl_WorkGroupID;
+// in uvec3 gl_LocalInvocationID;
+// in uvec3 gl_GlobalInvocationID;
+// in uint gl_LocalInvocationIndex;
+
+// const uvec3 gl_WorkGroupSize;
+
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+void main() {
+    uint i = gl_WorkGroupID.y * gl_NumWorkGroups.x + gl_WorkGroupID.x;
+    GRID_CELLS[i] = GridCell(gl_WorkGroupID.x, gl_WorkGroupID.y);
+}

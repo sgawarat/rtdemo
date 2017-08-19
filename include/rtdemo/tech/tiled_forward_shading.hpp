@@ -6,9 +6,9 @@
 
 namespace rtdemo {
 namespace tech {
-class ForwardShading final : public Technique {
+class TiledForwardShading final : public Technique {
  public:
-  ~ForwardShading() noexcept override {}
+  ~TiledForwardShading() noexcept override {}
 
   bool restore() override;
 
@@ -20,7 +20,14 @@ class ForwardShading final : public Technique {
 
   void apply(scene::Scene& scene) override;
 
- private:
+private:
+  struct GridCell {
+    uint32_t first;
+    uint32_t count;
+    float _0z;
+    float _0w;
+  };
+
   enum class DebugView : int {
     DEFAULT,
     POSITION,
@@ -29,9 +36,14 @@ class ForwardShading final : public Technique {
     DIFFUSE,
     SPECULAR,
     SPECULAR_POWER,
+    TILE_INDEX,
   };
 
-  garie::Program prog_;
+  garie::Program p0_prog_;
+  garie::Program p1_prog_;
+  garie::Program p2_prog_;
+  garie::Buffer light_grid_ssbo_;
+  garie::Buffer light_index_ssbo_;
   DebugView debug_view_ = DebugView::DEFAULT;
   std::string log_;
 };

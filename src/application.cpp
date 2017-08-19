@@ -72,7 +72,7 @@ void Application::update() {
   if (current_scene && current_technique) {
     current_scene->update();
     current_technique->update();
-    current_technique->apply(current_scene);
+    current_technique->apply(*current_scene);
   }
 }
 }  // namespace rtdemo

@@ -18,7 +18,9 @@ class StaticScene final : public Scene {
 
   void update_gui() override;
 
-  void draw(PassType type) override;
+  void apply(ApplyType type) override;
+
+  void draw(DrawType type) override;
 
  private:
   enum class DrawMode : int {

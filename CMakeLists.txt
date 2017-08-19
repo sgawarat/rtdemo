@@ -18,6 +18,7 @@ add_executable(rendering_techniques
     src/scene/static_scene.cpp
     src/tech/forward_shading.cpp
     src/tech/deferred_shading.cpp
+    src/tech/tiled_forward_shading.cpp
     libs/imgui/imgui.cpp
     libs/imgui/imgui_draw.cpp
 )

@@ -11,7 +11,7 @@ class Technique {
   virtual bool invalidate() = 0;
   virtual void update() = 0;
   virtual void update_gui() = 0;
-  virtual void apply(scene::Scene* scene) = 0;
+  virtual void apply(scene::Scene& scene) = 0;
 };
 }  // namespace tech
 }  // namespace rtdemo
