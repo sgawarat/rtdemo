@@ -1,19 +1,24 @@
 #version 450
 
-struct PointLight {
-    vec3 position_w;
-    float intensity;
-    vec3 color;
-    float radius;
-};
-
-layout(binding = 0) uniform Camera {
+struct Camera {
     mat4 view_proj;
     mat4 view;
     mat4 proj;
     mat4 view_proj_inv;
+    mat4 view_inv;
+    mat4 proj_inv;
     vec3 position_w;
-} CAMERA;
+};
+struct PointLight {
+    vec3 position_w;
+    float radius;
+    vec3 color;
+    float intensity;
+};
+
+layout(binding = 0) uniform CameraUniform {
+    Camera CAMERA;
+};
 
 layout(binding = 0) buffer LightBuffer {
     PointLight LIGHTS[];

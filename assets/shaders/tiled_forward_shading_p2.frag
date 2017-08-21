@@ -1,5 +1,14 @@
 #version 450
 
+struct Camera {
+    mat4 view_proj;
+    mat4 view;
+    mat4 proj;
+    mat4 view_proj_inv;
+    mat4 view_inv;
+    mat4 proj_inv;
+    vec3 position_w;
+};
 struct Material {
     vec3 ambient;
     vec3 diffuse;
@@ -8,22 +17,18 @@ struct Material {
 };
 struct PointLight {
     vec3 position_w;
-    float intensity;
-    vec3 color;
     float radius;
+    vec3 color;
+    float intensity;
 };
 struct GridCell {
     uint first;
     uint count;
 };
 
-layout(binding = 0) uniform Camera {
-    mat4 view_proj;
-    mat4 view;
-    mat4 proj;
-    mat4 view_proj_inv;
-    vec3 position_w;
-} CAMERA;
+layout(binding = 0) uniform CameraUniform {
+    Camera CAMERA;
+};
 layout(binding = 0) buffer ResourceIndexBuffer {
     uint RESOURCE_INDICES[];
 };
@@ -38,6 +43,7 @@ layout(binding = 20) buffer LightGridBuffer {
     GridCell GRID_CELLS[];
 };
 layout(binding = 21) buffer LightIndexBuffer {
+    uint LIGHT_INDEX_COUNT;
     uint LIGHT_INDICES[];
 };
 
@@ -70,6 +76,10 @@ void main() {
         uint tile_index = uint(IN.position_s.y * 23) * 40 + uint(IN.position_s.x * 40);
         final_color = vec3(tilecoord, 0) / vec3(40, 23, 0);
         //final_color = vec3(float(tile_index) / 920);
+    } else if (DEBUG_VIEW == 8) {
+        uint tile_index = uint(IN.position_s.y * 23) * 40 + uint(IN.position_s.x * 40);
+        GridCell cell = GRID_CELLS[tile_index];
+        final_color = vec3(cell.count);
     } else {
         vec3 v = normalize(CAMERA.position_w - IN.position_w);
         vec3 n = normalize(IN.normal_w);

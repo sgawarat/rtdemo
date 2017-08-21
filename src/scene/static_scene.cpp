@@ -90,10 +90,10 @@ bool StaticScene::restore() {
    std::vector<PointLight> lights;
   lights.reserve(2);
   lights.push_back(PointLight{
-      {0.f, 5.f, 0.f},
-      1.f,
+      {0.f, 3.f, 2.f},
+      3.f,
       {1.f, 1.f, 1.f},
-      7.f,
+      1.f,
   });
 //   lights.push_back(PointLight{
 //     {8.f, 1.f, 8.f},
@@ -219,6 +219,8 @@ void StaticScene::update() {
   mapped_camera_ubo->view = view;
   mapped_camera_ubo->proj = proj;
   mapped_camera_ubo->view_proj_inv = glm::inverse(view_proj);
+  mapped_camera_ubo->view_inv = glm::inverse(view);
+  mapped_camera_ubo->proj_inv = glm::inverse(proj);
   mapped_camera_ubo->position_w = eye;
   glUnmapBuffer(GL_UNIFORM_BUFFER);
 }

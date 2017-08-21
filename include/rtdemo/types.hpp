@@ -18,6 +18,8 @@ struct Camera {
   glm::mat4 view;
   glm::mat4 proj;
   glm::mat4 view_proj_inv;
+  glm::mat4 view_inv;
+  glm::mat4 proj_inv;
   glm::vec3 position_w;
   float _position_w;
 };
@@ -37,8 +39,8 @@ struct Material {
 
 struct PointLight {
   glm::vec3 position_w;
-  float intensity;
-  glm::vec3 color;
   float radius;
+  glm::vec3 color;
+  float intensity;
 };
 }  // namespace rtdemo
