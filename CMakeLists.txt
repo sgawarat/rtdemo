@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.0.0)
+
+if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake CACHE STRING "")
+endif()
+
 project(rendering_techniques VERSION 0.1.0)
 
 find_package(OpenGL REQUIRED)
@@ -48,16 +53,33 @@ target_include_directories(rendering_techniques PRIVATE
     ${OPENGL_INCLUDE_DIR}
 )
 target_link_libraries(rendering_techniques
-    assimp
+    ${ASSIMP_LIBRARIES}
     glfw
     ${GLEW_LIBRARY}
     ${OPENGL_gl_LIBRARY}
-    pthread
+    #pthread
 )
 
-add_custom_target(glsl ALL glslangValidator ./*.{vert,frag,comp}
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/assets/shaders
-    COMMENT "Validating shaders")
+set(SHADER_SOURCES
+    forward_shadering.vert
+    forward_shadering.frag
+    deferred_shadering_p0.vert
+    deferred_shadering_p0.frag
+    deferred_shadering_p1.vert
+    deferred_shadering_p1.frag
+    tiled_forward_shadering_p0.vert
+    tiled_forward_shadering_p0.frag
+    tiled_forward_shadering_p1.comp
+    tiled_forward_shadering_p2.vert
+    tiled_forward_shadering_p2.frag
+    tiled_forward_shadering_p3.vert
+    tiled_forward_shadering_p3.frag
+)
+
+# add_custom_target(glsl ALL
+#     glslangValidator  ${SHADER_SOURCES}
+#     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/assets/shaders
+#     COMMENT "Validating shaders")
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

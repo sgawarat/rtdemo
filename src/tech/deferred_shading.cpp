@@ -141,6 +141,7 @@ void DeferredShading::apply(scene::Scene& scene) {
   util::default_bs().apply();
   util::depth_test_dss().apply();
   scene.apply(scene::ApplyType::SHADE);
+  #undef OPAQUE
   scene.draw(scene::DrawType::OPAQUE);
 
   // Lighting pass

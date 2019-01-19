@@ -39,10 +39,10 @@ layout(binding = 2) buffer LightBuffer {
     PointLight LIGHTS[];
 };
 
-layout(binding = 20) buffer LightGridBuffer {
+layout(binding = 10) buffer LightGridBuffer {
     GridCell GRID_CELLS[];
 };
-layout(binding = 21) buffer LightIndexBuffer {
+layout(binding = 11) buffer LightIndexBuffer {
     uint LIGHT_INDEX_COUNT;
     uint LIGHT_INDICES[];
 };

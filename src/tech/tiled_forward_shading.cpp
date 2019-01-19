@@ -143,6 +143,7 @@ void TiledForwardShading::apply(scene::Scene& scene) {
   util::default_bs().apply();
   util::depth_test_dss().apply();
   scene.apply(scene::ApplyType::NO_SHADE);
+  #undef OPAQUE
   scene.draw(scene::DrawType::OPAQUE);
 
   // light assignment
@@ -169,12 +170,13 @@ void TiledForwardShading::apply(scene::Scene& scene) {
 
   p2_prog_.use();
   glUniform1ui(11, static_cast<int>(debug_view_));  
-  light_grid_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 20);
-  light_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 21);
+  light_grid_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 10);
+  light_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 11);
   util::default_rs().apply();
   util::alpha_blending_bs().apply();
   util::depth_test_no_write_dss().apply();
   scene.apply(scene::ApplyType::SHADE);
+  #undef OPAQUE
   scene.draw(scene::DrawType::OPAQUE);
 
   // postprocess
