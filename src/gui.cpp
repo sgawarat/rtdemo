@@ -6,15 +6,26 @@
 #include <imgui.h>
 #include <rtdemo/logging.hpp>
 
-namespace rtdemo {
-namespace gui {
+namespace rtdemo::gui {
 namespace {
 constexpr size_t INDICES_SIZE = 6 * 1024 * sizeof(ImDrawIdx);
 constexpr size_t VERTICES_SIZE = 4 * 1024 * sizeof(ImDrawVert);
 }  // namespace
 
-bool Gui::init(GLFWwindow* window, void(render_drawlists_fn)(ImDrawData*)) {
+bool Gui::init(GLFWwindow* window) {
+  // コンテキストを生成する
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+
+  // スタイルを設定する
+  ImGui::StyleColorsDark();
+
+  // 初期化
   ImGuiIO& io = ImGui::GetIO();
+  io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;  // マウスカーソルの位置を取得できる
+  io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;  // マウスカーソルの位置を変更できる
+
+  // キーマッピング
   io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB;
   io.KeyMap[ImGuiKey_LeftArrow] = GLFW_KEY_LEFT;
   io.KeyMap[ImGuiKey_RightArrow] = GLFW_KEY_RIGHT;
@@ -35,7 +46,7 @@ bool Gui::init(GLFWwindow* window, void(render_drawlists_fn)(ImDrawData*)) {
   io.KeyMap[ImGuiKey_Y] = GLFW_KEY_Y;
   io.KeyMap[ImGuiKey_Z] = GLFW_KEY_Z;
 
-  io.RenderDrawListsFn = render_drawlists_fn;
+  // クリップボードのやり取りを行なうコールバックを設定する
   io.SetClipboardTextFn = [](void* user_data, const char* text) {
     glfwSetClipboardString(reinterpret_cast<GLFWwindow*>(user_data), text);
   };
@@ -43,10 +54,13 @@ bool Gui::init(GLFWwindow* window, void(render_drawlists_fn)(ImDrawData*)) {
     return glfwGetClipboardString(reinterpret_cast<GLFWwindow*>(user_data));
   };
   io.ClipboardUserData = window;
-#ifdef _WIN32
+
+#ifdef WIN32
+  // IMEの状態を監視するウィンドウのハンドル
   io.ImeWindowHandle = glfwGetWin32Window(window);
 #endif
 
+  // シェーダを生成する
   const GLchar* vert_code = R"CODE(
         #version 450
         layout(location = 0) uniform mat4 PROJ;
@@ -68,7 +82,7 @@ bool Gui::init(GLFWwindow* window, void(render_drawlists_fn)(ImDrawData*)) {
   if (!vert.compile(vert_code)) {
     GLchar info_log[1024];
     vert.get_info_log(1024, info_log);
-    RT_LOG(error, "Failed to compile GUI\'s vertex shader (info_log:{})",
+    RT_LOG(error, "GUIの頂点シェーダのコンパイルに失敗した。(info_log:{})",
            info_log);
     return false;
   }
@@ -92,48 +106,51 @@ bool Gui::init(GLFWwindow* window, void(render_drawlists_fn)(ImDrawData*)) {
   if (!frag.compile(frag_code)) {
     GLchar info_log[1024];
     frag.get_info_log(1024, info_log);
-    RT_LOG(error, "Failed to compile GUI\'s fragment shader (info_log:{})",
+    RT_LOG(error, "GUIのフラグメントシェーダのコンパイルに失敗した。(info_log:{})",
            info_log);
     return false;
   }
 
+  // シェーダプログラムを生成する
   garie::Program prog;
   prog.gen();
   if (!prog.link(vert, frag)) {
     GLchar info_log[1024];
     prog.get_info_log(1024, info_log);
-    RT_LOG(error, "Failed to compile GUI\'s shader program (info_log:{})",
+    RT_LOG(error, "GUIのシェーダプログラムのリンクに失敗した。(info_log:{})",
            info_log);
     return false;
   }
 
-  garie::RasterizationState rs =
+  // ステートを生成する
+  auto rs =
       garie::RasterizationStateBuilder().cull_mode(GL_NONE).build();
-
-  garie::ColorBlendState bs =
+  auto cbs =
       garie::ColorBlendStateBuilder()
           .enable(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_FUNC_ADD,
                   GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_FUNC_ADD,
                   {GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE})
           .build();
+  auto dss = garie::DepthStencilStateBuilder().build();
 
-  garie::DepthStencilState dss = garie::DepthStencilStateBuilder().build();
-
-  garie::Buffer ibo;
-  ibo.gen();
-  ibo.bind(GL_ELEMENT_ARRAY_BUFFER);
+  // インデックスバッファを生成する
+  garie::Buffer ib;
+  ib.gen();
+  ib.bind(GL_ELEMENT_ARRAY_BUFFER);
   glBufferStorage(GL_ELEMENT_ARRAY_BUFFER, INDICES_SIZE, nullptr,
                   GL_MAP_WRITE_BIT);
 
-  garie::Buffer vbo;
-  vbo.gen();
-  vbo.bind(GL_ARRAY_BUFFER);
+  // 頂点バッファを生成する
+  garie::Buffer vb;
+  vb.gen();
+  vb.bind(GL_ARRAY_BUFFER);
   glBufferStorage(GL_ARRAY_BUFFER, VERTICES_SIZE, nullptr, GL_MAP_WRITE_BIT);
 
-  garie::VertexArray vao =
+  // VAOを生成する
+  auto va =
       garie::VertexArrayBuilder()
-          .index_buffer(ibo)
-          .vertex_buffer(vbo)
+          .index_buffer(ib)
+          .vertex_buffer(vb)
           .attribute(0, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert),
                      offsetof(ImDrawVert, pos), 0)
           .attribute(1, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert),
@@ -142,6 +159,7 @@ bool Gui::init(GLFWwindow* window, void(render_drawlists_fn)(ImDrawData*)) {
                      offsetof(ImDrawVert, col), 0)
           .build();
 
+  // フォントのイメージを格納するテクスチャを生成する
   unsigned char* pixels;
   int width, height;
   io.Fonts->AddFontFromFileTTF("assets/fonts/migu-1m-regular.ttf", 14.f,
@@ -154,45 +172,46 @@ bool Gui::init(GLFWwindow* window, void(render_drawlists_fn)(ImDrawData*)) {
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED,
                   GL_UNSIGNED_BYTE, pixels);
   // glGenerateMipmap(GL_TEXTURE_2D);
+  io.Fonts->TexID = reinterpret_cast<void*>(static_cast<intptr_t>(font_tex_.id()));
   io.Fonts->ClearTexData();
 
+  // サンプラを生成する
   garie::Sampler font_ss = garie::SamplerBuilder()
                                .min_filter(GL_NEAREST)
                                .mag_filter(GL_NEAREST)
                                .build();
 
+  // 後始末
   window_ = window;
   prog_ = std::move(prog);
   rs_ = std::move(rs);
-  bs_ = std::move(bs);
+  cbs_ = std::move(cbs);
   dss_ = std::move(dss);
-  vao_ = std::move(vao);
-  ibo_ = std::move(ibo);
-  vbo_ = std::move(vbo);
+  va_ = std::move(va);
+  ib_ = std::move(ib);
+  vb_ = std::move(vb);
   font_tex_ = std::move(font_tex);
   font_ss_ = std::move(font_ss);
 
-  io.Fonts->TexID = (void*)(intptr_t)font_tex_.id();
-  glfwSetWindowUserPointer(window_, this);
   return true;
 }
 
 void Gui::terminate() {
   prog_ = garie::Program();
-  vao_ = garie::VertexArray();
-  ibo_ = garie::Buffer();
-  vbo_ = garie::Buffer();
+  va_ = garie::VertexArray();
+  ib_ = garie::Buffer();
+  vb_ = garie::Buffer();
   if (font_tex_) {
     ImGui::GetIO().Fonts->TexID = 0;
     font_tex_ = garie::Texture();
   }
-  ImGui::Shutdown();
+  ImGui::DestroyContext();
 }
 
 void Gui::new_frame() {
   ImGuiIO& io = ImGui::GetIO();
 
-  // Setup display size (every frame to accommodate for window resizing)
+  // ディスプレイサイズを設定する
   int w, h;
   int display_w, display_h;
   glfwGetWindowSize(window_, &w, &h);
@@ -201,50 +220,44 @@ void Gui::new_frame() {
   io.DisplayFramebufferScale = ImVec2(w > 0 ? ((float)display_w / w) : 0,
                                       h > 0 ? ((float)display_h / h) : 0);
 
-  // Setup time step
+  // 時間間隔を設定する
   double current_time = glfwGetTime();
   io.DeltaTime =
       time_ > 0.0 ? (float)(current_time - time_) : (float)(1.0f / 60.0f);
   time_ = current_time;
 
-  // Setup inputs
-  // (we already got mouse wheel, keyboard keys & characters from glfw callbacks
-  // polled in glfwPollEvents())
+  // マウスカーソルの位置を更新する
+  const ImVec2 mouse_pos = io.MousePos;
+  io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
   if (glfwGetWindowAttrib(window_, GLFW_FOCUSED)) {
-    double mouse_x, mouse_y;
-    glfwGetCursorPos(window_, &mouse_x, &mouse_y);
-    io.MousePos = ImVec2((float)mouse_x,
-                         (float)mouse_y);  // Mouse position in screen
-                                           // coordinates (set to -1,-1 if no
-                                           // mouse / on another screen, etc.)
-  } else {
-    io.MousePos = ImVec2(-1, -1);
+    if (io.WantSetMousePos) {
+      glfwSetCursorPos(window_, static_cast<double>(mouse_pos.x), static_cast<double>(mouse_pos.y));
+    } else {
+      double mouse_x, mouse_y;
+      glfwGetCursorPos(window_, &mouse_x, &mouse_y);
+      io.MousePos = ImVec2(static_cast<float>(mouse_x), static_cast<float>(mouse_y));
+    }
   }
 
+  // マウスボタンの状態を更新する
   for (int i = 0; i < 3; i++) {
     io.MouseDown[i] = mouse_pressed_[i] ||
-                      glfwGetMouseButton(window_, i) !=
-                          0;  // If a mouse press event came, always pass it as
-                              // "mouse held this frame", so we don't miss
-                              // click-release events that are shorter than 1
-                              // frame.
+                      glfwGetMouseButton(window_, i);
     mouse_pressed_[i] = false;
   }
 
-  io.MouseWheel = mouse_wheel_;
-  mouse_wheel_ = 0.0f;
-
-  // Hide OS mouse cursor if ImGui is drawing it
-  glfwSetInputMode(
-      window_, GLFW_CURSOR,
-      io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
-
-  // Start the frame
+  // フレーム開始
   ImGui::NewFrame();
 }
 
-void Gui::render_drawlists(ImDrawData* draw_data) {
+void Gui::render() {
+  ImGui::Render();
+
+  ImDrawData* draw_data = ImGui::GetDrawData();
+
   ImGuiIO& io = ImGui::GetIO();
+
+  // 
   int fb_width = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
   int fb_height = (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y);
   if (fb_width == 0 || fb_height == 0) return;
@@ -273,33 +286,36 @@ void Gui::render_drawlists(ImDrawData* draw_data) {
   prog_.use();
   glUniformMatrix4fv(0, 1, GL_FALSE, ortho_projection);
   rs_.apply();
-  bs_.apply();
+  cbs_.apply();
   dss_.apply();
 
-  vao_.bind();
+  va_.bind();
   font_tex_.active(0, GL_TEXTURE_2D);
   font_ss_.bind(0);
   for (int n = 0; n < draw_data->CmdListsCount; ++n) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
     const ImDrawIdx* idx_buffer_offset = 0;
     
-    ibo_.bind(GL_ELEMENT_ARRAY_BUFFER);
-    ImDrawIdx* mapped_ibo = reinterpret_cast<ImDrawIdx*>(
+    // インデックスデータを書き込む
+    ib_.bind(GL_ELEMENT_ARRAY_BUFFER);
+    ImDrawIdx* ib_data = reinterpret_cast<ImDrawIdx*>(
         glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0,
                          cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx),
                          GL_MAP_WRITE_BIT));
-    memcpy(mapped_ibo, cmd_list->IdxBuffer.Data,
+    memcpy(ib_data, cmd_list->IdxBuffer.Data,
            cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
     glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 
-    vbo_.bind(GL_ARRAY_BUFFER);
-    ImDrawVert* mapped_vbo = reinterpret_cast<ImDrawVert*>(glMapBufferRange(
+    // 頂点データを書き込む
+    vb_.bind(GL_ARRAY_BUFFER);
+    ImDrawVert* vb_data = reinterpret_cast<ImDrawVert*>(glMapBufferRange(
         GL_ARRAY_BUFFER, 0, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert),
         GL_MAP_WRITE_BIT));
-    memcpy(mapped_vbo, cmd_list->VtxBuffer.Data,
+    memcpy(vb_data, cmd_list->VtxBuffer.Data,
            cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
     glUnmapBuffer(GL_ARRAY_BUFFER);
 
+    // 描画する
     for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
       const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
       if (pcmd->UserCallback) {
@@ -320,13 +336,15 @@ void Gui::render_drawlists(ImDrawData* draw_data) {
 }
 
 void Gui::on_mouse_button(int button, int action, int mods) {
-  if (action == GLFW_PRESS && button >= 0 && button < 3) {
+  if (action == GLFW_PRESS && button >= 0 && button < IM_ARRAYSIZE(mouse_pressed_)) {
     mouse_pressed_[button] = true;
   }
 }
 
 void Gui::on_scroll(double x, double y) {
-  mouse_wheel_ = static_cast<float>(y);
+  auto& io = ImGui::GetIO();
+  io.MouseWheelH = static_cast<float>(x);
+  io.MouseWheel = static_cast<float>(y);
 }
 
 void Gui::on_key(int key, int scancode, int action, int mods) {
@@ -339,8 +357,7 @@ void Gui::on_key(int key, int scancode, int action, int mods) {
   io.KeyShift =
       io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
   io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
-  // io.KeyKeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] ||
-  // io.KeysDown[GLFW_KEY_RIGHT_SUPER];
+  io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
 }
 
 void Gui::on_char(unsigned int c) {
@@ -348,5 +365,4 @@ void Gui::on_char(unsigned int c) {
     ImGui::GetIO().AddInputCharacter((unsigned short)c);
   }
 }
-}  // namespace gui
-}  // namespace rtdemo
+}  // namespace rtdemo::gui

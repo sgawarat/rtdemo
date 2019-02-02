@@ -1,4 +1,5 @@
 #include <rtdemo/logging.hpp>
+#include <spdlog/sinks/stdout_sinks.h>
 
 namespace rtdemo {
 namespace logging {

@@ -16,10 +16,6 @@ void glfw_error_callback(int, const char* desc) {
   RT_LOG(error, "GLFW Error: {}", desc);
 }
 
-void render_drawlists(ImDrawData* draw_data) {
-  gui_.render_drawlists(draw_data);
-}
-
 void mouse_button_callback(GLFWwindow*, int button, int action, int mods) {
   gui_.on_mouse_button(button, action, mods);
 }
@@ -75,7 +71,7 @@ int main() {
   RT_LOG(info, "start main");
   {
     // init GUI
-    gui_.init(window, render_drawlists);
+    gui_.init(window);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetKeyCallback(window, key_callback);
@@ -101,7 +97,7 @@ int main() {
 
       app.update();
 
-      ImGui::Render();
+      gui_.render();
 
       glfwSwapBuffers(window);
     }

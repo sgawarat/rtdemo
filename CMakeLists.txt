@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.12.0)
 
 if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake CACHE STRING "")
@@ -6,10 +6,12 @@ endif()
 
 project(rendering_techniques VERSION 0.1.0)
 
+find_package(spdlog CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
-find_package(glfw3 REQUIRED)
-find_package(assimp REQUIRED)
+find_package(GLEW CONFIG REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
+find_package(assimp CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 include(CTest)
 enable_testing()
@@ -24,41 +26,46 @@ add_executable(rendering_techniques
     src/tech/forward_shading.cpp
     src/tech/deferred_shading.cpp
     src/tech/tiled_forward_shading.cpp
-    libs/imgui/imgui.cpp
-    libs/imgui/imgui_draw.cpp
 )
 target_compile_features(rendering_techniques PRIVATE
-    cxx_std_14
-)
-target_compile_options(rendering_techniques PRIVATE
-    -march=native
+    cxx_std_20
 )
 target_compile_definitions(rendering_techniques PRIVATE
     GLFW_INCLUDE_NONE
+    GLM_ENABLE_EXPERIMENTAL
+    SPDLOG_FMT_EXTERNAL
 )
-if(WIN32)
+if(UNIX)
+    target_compile_options(rendering_techniques PRIVATE
+        -march=native
+    )
+elseif(WIN32)
+    target_compile_options(rendering_techniques PRIVATE
+        /source-charset:utf-8
+    )
     target_compile_definitions(rendering_techniques PRIVATE
         GLFW_EXPOSE_NATIVE_WIN32
     )
-endif(WIN32)
+endif(UNIX)
 
 target_include_directories(rendering_techniques PRIVATE
     ${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/libs/spdlog/include
-    ${PROJECT_SOURCE_DIR}/libs/imgui
-    ${PROJECT_SOURCE_DIR}/libs/glm
-    ${ASSIMP_INCLUDE_DIR}
-    ${GLFW_INCLUDE_DIR}
-    ${GLEW_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
 )
 target_link_libraries(rendering_techniques
+    imgui::imgui
     ${ASSIMP_LIBRARIES}
     glfw
-    ${GLEW_LIBRARY}
+    GLEW::GLEW
     ${OPENGL_gl_LIBRARY}
-    #pthread
+    spdlog::spdlog
 )
+
+if(UNIX)
+    target_link_libraries(rendering_techniques
+        pthread
+    )
+endif(UNIX)
 
 set(SHADER_SOURCES
     forward_shadering.vert
