@@ -4,19 +4,36 @@
 #include "scene/scene.hpp"
 #include "tech/technique.hpp"
 
-#define RT_MANAGED_SCENE_INSTANCE(ns, T)                        \
-namespace {                                                   \
-::rtdemo::ManagedScene<ns::T> MANAGED_SCENE_INSTANCE_##T{#T}; \
-}
+/**
+ * @brief ユニークなManagedSceneを定義するマクロ
+ * 
+ */
+#define RT_MANAGED_SCENE_INSTANCE(ns, T)                          \
+  namespace {                                                     \
+    ::rtdemo::ManagedScene<ns::T> MANAGED_SCENE_INSTANCE_##T{#T}; \
+  }
 
-#define RT_MANAGED_TECHNIQUE_INSTANCE(ns, T)                            \
-  namespace {                                                           \
-  ::rtdemo::ManagedTechnique<ns::T> MANAGED_TECHNIQUE_INSTANCE_##T{#T}; \
+/**
+ * @brief ユニークなManagedTechniqueを定義するマクロ
+ * 
+ */
+#define RT_MANAGED_TECHNIQUE_INSTANCE(ns, T)                              \
+  namespace {                                                             \
+    ::rtdemo::ManagedTechnique<ns::T> MANAGED_TECHNIQUE_INSTANCE_##T{#T}; \
   }
 
 namespace rtdemo {
-  void register_managed_scene(const char*, scene::Scene*);
-  void register_managed_technique(const char*, tech::Technique*);
+/**
+ * @brief シーンをリストに登録する
+ * 
+ */
+void register_managed_scene(const char*, scene::Scene*);
+
+/**
+ * @brief テクニックをリストに登録する
+ * 
+ */
+void register_managed_technique(const char*, tech::Technique*);
 
 template <typename T>
 class ManagedScene final {

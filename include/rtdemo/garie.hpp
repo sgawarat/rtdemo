@@ -3,8 +3,17 @@
 #include <array>
 #include <GL/glew.h>
 
-// OpenGL RAII wrappers
+// OpenGLのRAIIラッパー
 namespace garie {
+/**
+ * @brief GLオブジェクト
+ * 
+ * DerivedはObject<Derived>を継承し、Object<Derived>からアクセス可能な以下のメソッドを持つ。
+ * - `GLuint gen_impl()`:GLオブジェクトを生成する
+ * - `void delete_impl(GLuint)`:GLオブジェクトを破棄する
+ * 
+ * @tparam Derived 派生先の型
+ */
 template <typename Derived>
 class Object {
  public:
@@ -35,21 +44,43 @@ class Object {
     return id_ != 0;
   }
 
+  /**
+   * @brief 生成する
+   * 
+   */
   void gen() noexcept {
     id_ = Derived::gen_impl();
   }
 
+  /**
+   * @brief GLオブジェクトのIDを返す
+   * 
+   * @return GLuint ID
+   */
   GLuint id() const noexcept {
     return id_;
   }
 
  private:
-  GLuint id_ = 0;
+  GLuint id_ = 0;  ///< GLオブジェクトID
 };
 
+/**
+ * @brief シェーダオブジェクト
+ * 
+ * @tparam TYPE シェーダタイプの定数
+ */
 template <GLenum TYPE>
 class Shader : public Object<Shader<TYPE>> {
  public:
+  /**
+   * @brief コンパイルする
+   * 
+   * @param string シェーダコードの文字列
+   * @param length stringの文字数。-1であれば、stringはヌル終端されている。
+   * @return true コンパイルに成功した
+   * @return false コンパイルに失敗した
+   */
   bool compile(const GLchar* string, GLint length = -1) const noexcept {
     glShaderSource(this->id(), 1, &string, &length);
     glCompileShader(this->id());
@@ -59,6 +90,13 @@ class Shader : public Object<Shader<TYPE>> {
     return status == GL_TRUE;
   }
 
+  /**
+   * @brief コンパイル時の情報ログを書き出す
+   * 
+   * @param size ログを書き出す配列の大きさ
+   * @param info_log ログを書き出す配列へのポインタ
+   * @return GLsizei 実際に書き出したログの文字数
+   */
   GLsizei get_info_log(GLsizei size, GLchar* info_log) const noexcept {
     GLsizei length = 0;
     glGetShaderInfoLog(this->id(), size, &length, info_log);
@@ -80,8 +118,20 @@ using VertexShader = Shader<GL_VERTEX_SHADER>;
 using FragmentShader = Shader<GL_FRAGMENT_SHADER>;
 using ComputeShader = Shader<GL_COMPUTE_SHADER>;
 
+/**
+ * @brief シェーダプログラム
+ * 
+ */
 class Program : public Object<Program> {
  public:
+  /**
+   * @brief リンクする
+   * 
+   * @tparam TYPES シェーダオブジェクトのタイプ
+   * @param shaders シェーダオブジェクト
+   * @return true リンクに成功した
+   * @return false リンクに失敗した
+   */
   template <GLenum... TYPES>
   bool link(const Shader<TYPES>&... shaders) const noexcept {
     const GLuint shader_ids[] = {shaders.id()...};
@@ -95,6 +145,13 @@ class Program : public Object<Program> {
     return status == GL_TRUE;
   }
 
+  /**
+   * @brief リンク時の情報ログを書き出す
+   * 
+   * @param size ログを書き出す配列の大きさ
+   * @param info_log ログを書き出す配列へのポインタ
+   * @return GLsizei 実際に書き出したログの文字数
+   */
   GLsizei get_info_log(GLsizei size, GLchar* info_log) const noexcept {
     GLsizei length = 0;
     glGetProgramInfoLog(id(), size, &length, info_log);
@@ -126,6 +183,10 @@ class Program : public Object<Program> {
   }
 };
 
+/**
+ * @brief バッファ
+ * 
+ */
 class Buffer : public Object<Buffer> {
  public:
   void bind(GLenum target) const noexcept {
@@ -155,6 +216,10 @@ class Buffer : public Object<Buffer> {
   }
 };
 
+/**
+ * @brief VAO
+ * 
+ */
 class VertexArray : public Object<VertexArray> {
  public:
   void bind() const noexcept {
@@ -175,8 +240,16 @@ class VertexArray : public Object<VertexArray> {
   }
 };
 
+/**
+ * @brief VertexArrayを構築するビルダークラス
+ * 
+ */
 class VertexArrayBuilder {
  public:
+  /**
+   * @brief VAOを生成し、バインドする
+   * 
+   */
   VertexArrayBuilder() {
     vao_.gen();
     vao_.bind();
@@ -184,16 +257,40 @@ class VertexArrayBuilder {
 
   ~VertexArrayBuilder() noexcept = default;
 
+  /**
+   * @brief インデックスバッファをバインドする
+   * 
+   * @param buffer バッファ
+   * @return VertexArrayBuilder& 自身を返す
+   */
   VertexArrayBuilder& index_buffer(const Buffer& buffer) noexcept {
     buffer.bind(GL_ELEMENT_ARRAY_BUFFER);
     return *this;
   }
 
+  /**
+   * @brief 頂点バッファをバインドする
+   * 
+   * @param buffer バッファ
+   * @return VertexArrayBuilder& 自身を返す
+   */
   VertexArrayBuilder& vertex_buffer(const Buffer& buffer) noexcept {
     buffer.bind(GL_ARRAY_BUFFER);
     return *this;
   }
 
+  /**
+   * @brief 頂点の属性を有効化する
+   * 
+   * @param index generic vertex attributeの番号
+   * @param size 要素数
+   * @param type 型のenum
+   * @param normalized 正規化されているか
+   * @param stride ストライド
+   * @param offset オフセット
+   * @param divisor インスタンスごとの数
+   * @return VertexArrayBuilder& 自身を返す
+   */
   VertexArrayBuilder& attribute(GLuint index, GLint size, GLenum type,
                                 GLboolean normalized, GLsizei stride,
                                 GLsizeiptr offset, GLuint divisor) noexcept {
@@ -204,6 +301,11 @@ class VertexArrayBuilder {
     return *this;
   }
 
+  /**
+   * @brief VAOの状態を確定させる
+   * 
+   * @return VertexArray VAOを返す
+   */
   VertexArray build() noexcept {
     glBindVertexArray(0);
     return std::move(vao_);
@@ -213,6 +315,10 @@ class VertexArrayBuilder {
   VertexArray vao_;
 };
 
+/**
+ * @brief テクスチャ
+ * 
+ */
 class Texture : public Object<Texture> {
  public:
   void bind(GLenum target) const noexcept {
@@ -238,6 +344,10 @@ class Texture : public Object<Texture> {
   }
 };
 
+/**
+ * @brief サンプラ
+ * 
+ */
 class Sampler : public Object<Sampler> {
  public:
   void bind(GLuint unit) const noexcept {
@@ -286,8 +396,16 @@ class Sampler : public Object<Sampler> {
   }
 };
 
+/**
+ * @brief サンプラを構築するビルダークラス
+ * 
+ */
 class SamplerBuilder final {
  public:
+  /**
+   * @brief サンプラを生成する
+   * 
+   */
   SamplerBuilder() {
     sampler_.gen();
   }
@@ -360,6 +478,11 @@ class SamplerBuilder final {
     return *this;
   }
 
+  /**
+   * @brief 状態を確定させる
+   * 
+   * @return Sampler サンプラ
+   */
   Sampler build() noexcept {
     return std::move(sampler_);
   }
@@ -368,6 +491,10 @@ class SamplerBuilder final {
   Sampler sampler_;
 };
 
+/**
+ * @brief フレームバッファ
+ * 
+ */
 class Framebuffer final : public Object<Framebuffer> {
  public:
   void bind(GLenum target) const noexcept {
@@ -388,6 +515,10 @@ class Framebuffer final : public Object<Framebuffer> {
   }
 };
 
+/**
+ * @brief フレームバッファを構築するビルダークラス
+ * 
+ */
 class FramebufferBuilder final {
  public:
   FramebufferBuilder() {
@@ -485,8 +616,16 @@ class FramebufferBuilder final {
   Framebuffer framebuffer_;
 };
 
+/**
+ * @brief ラスタライザーステート
+ * 
+ */
 class RasterizationState final {
  public:
+  /**
+   * @brief 状態を適用する
+   * 
+   */
   void apply() const noexcept {
     if (is_depth_clamp_enabled_) {
       glEnable(GL_DEPTH_CLAMP);
@@ -538,6 +677,10 @@ class RasterizationState final {
   GLfloat line_width_ = 1.f;
 };
 
+/**
+ * @brief ラスタライザーステートを構築するビルダークラス
+ * 
+ */
 class RasterizationStateBuilder final {
  public:
   RasterizationStateBuilder() {}
@@ -588,6 +731,10 @@ class RasterizationStateBuilder final {
   RasterizationState state_;
 };
 
+/**
+ * @brief アタッチメントのブレンドステート
+ * 
+ */
 class ColorBlendAttachmentState final {
  public:
   void apply(GLuint index) const noexcept {
@@ -617,6 +764,10 @@ class ColorBlendAttachmentState final {
                                              GL_TRUE};
 };
 
+/**
+ * @brief ブレンドステート
+ * 
+ */
 class ColorBlendState final {
  public:
   void apply() const noexcept {
@@ -632,6 +783,10 @@ class ColorBlendState final {
   std::array<ColorBlendAttachmentState, 8> attachments_;
 };
 
+/**
+ * @brief ブレンドステートを構築するビルダークラス
+ * 
+ */
 class ColorBlendStateBuilder final {
  public:
   ColorBlendStateBuilder() {}
@@ -659,6 +814,10 @@ class ColorBlendStateBuilder final {
   ColorBlendState state_;
 };
 
+/**
+ * @brief ステンシル処理のステート
+ * 
+ */
 class StencilOpState final {
  public:
   void apply(GLenum face) const noexcept {
@@ -679,6 +838,10 @@ class StencilOpState final {
   GLint reference_ = 0;
 };
 
+/**
+ * @brief デプスステンシルステート
+ * 
+ */
 class DepthStencilState final {
  public:
   void apply() const noexcept {
@@ -716,6 +879,10 @@ class DepthStencilState final {
   GLfloat max_depth_bounds_ = 1.f;
 };
 
+/**
+ * @brief デプスステンシルステートを構築するビルダークラス
+ * 
+ */
 class DepthStencilStateBuilder final {
  public:
   DepthStencilStateBuilder() {}
