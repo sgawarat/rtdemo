@@ -1,4 +1,8 @@
 #include <cstdlib>
+#ifdef WIN32
+#include <Windows.h>
+#endif
+#include <GLFW/glfw3.h>
 #include <GL/glew.h>
 #include <imgui.h>
 #include <glm/glm.hpp>
@@ -34,59 +38,62 @@ void char_callback(GLFWwindow*, unsigned int c) {
 }  // namespace
 
 int main() {
-  // init GLFW
+  // GLFWを初期化する
   glfwSetErrorCallback((GLFWerrorfun)glfw_error_callback);
   if (!glfwInit()) {
-    RT_LOG(error, "failed to glfwInit");
+    RT_LOG(error, "GLFWの初期化に失敗した");
     return EXIT_FAILURE;
   }
 
-  // create GLFW window
+  // GLFWウィンドウを生成する
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #ifndef NDEBUG
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif
-  GLFWwindow* window = glfwCreateWindow(1280, 720, "Rendering Techniques Demo",
+  GLFWwindow* window = glfwCreateWindow(1280, 720, "rtdemo",
                                         nullptr, nullptr);
   if (!window) {
-    RT_LOG(error, "failed to glfwCreateWindow");
+    RT_LOG(error, "GLFWウィンドウの生成に失敗した");
     return EXIT_FAILURE;
   }
   glfwMakeContextCurrent(window);
-  // glfwSwapInterval(1);
-  glfwSwapInterval(0);
+  // glfwSwapInterval(1);  // VSyncオン
+  glfwSwapInterval(0);  // VSyncオフ
 
 #ifdef WIN32
-  freopen("CONOUT$", "w", stdout);
+  // コンソールを表示する
+  FILE* stream = nullptr;
+  freopen_s(&stream, "CONOUT$", "w", stdout);
 #endif
 
-  // init GLEW
+  // GLEWを初期化する
   if (glewInit() != GLEW_OK) {
-    RT_LOG(error, "failed to glewInit");
+    RT_LOG(error, "GLEWの初期化に失敗した");
     return EXIT_FAILURE;
   }
 
-  RT_LOG(info, "start main");
+  RT_LOG(info, "=== 開始 ===");
   {
-    // init GUI
+    // GUIを初期化する
     gui_.init(window);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetKeyCallback(window, key_callback);
     glfwSetCharCallback(window, char_callback);
 
-    // init application
+    // アプリケーションを初期化する
     Application app;
     app.init();
 
+    // メインループ
     while (!glfwWindowShouldClose(window)) {
       glfwPollEvents();
 
       gui_.new_frame();
 
-      // clear frontbuffer
+      // バックバッファをクリアする
       glViewport(0, 0, 1280, 720);
       glDisable(GL_SCISSOR_TEST);
       glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -102,11 +109,12 @@ int main() {
       glfwSwapBuffers(window);
     }
   }
-  RT_LOG(info, "finish main");
+  RT_LOG(info, "=== 終了 ===");
 
   gui_.terminate();
   glfwTerminate();
 
+  // ログを確認するためにコンソールへのキー入力を要求する
 #ifdef WIN32
   system("PAUSE");
 #else

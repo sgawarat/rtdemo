@@ -14,13 +14,14 @@ RT_MANAGED_SCENE_INSTANCE(scene, StaticScene);
 
 namespace scene {
 bool StaticScene::restore() {
+  // シーンを読み込む
   // const char* scene_path = "assets/scenes/cornellbox/CornellBox-Original.obj";
   const char* scene_path = "assets/scenes/test/untitled.obj";
   Assimp::Importer importer;
   const aiScene* scene =
       importer.ReadFile(scene_path, aiProcess_Triangulate | aiProcess_GenNormals);
 
-  // copy all draw data
+  // 描画に必要なデータをコピーする
   size_t total_vertex_count = 0;
   size_t total_index_count = 0;
   std::vector<ResourceIndex> resource_indices;
@@ -41,7 +42,7 @@ bool StaticScene::restore() {
     total_vertex_count += mesh->mNumVertices;
   }
 
-  // copy all mesh data
+  // メッシュのデータをコピーする
   std::vector<VertexP3N3> vertices;
   std::vector<uint16_t> indices;
   vertices.reserve(total_vertex_count);
@@ -63,7 +64,7 @@ bool StaticScene::restore() {
     }
   }
 
-  // copy all material data
+  // マテリアルのデータをコピーする
   std::vector<Material> materials;
   materials.reserve(scene->mNumMaterials);
   for (size_t i = 0; i < scene->mNumMaterials; ++i) {
@@ -78,30 +79,31 @@ bool StaticScene::restore() {
     material->Get(AI_MATKEY_SHININESS, shininess);
     materials.push_back(Material{
         {ambient.r, ambient.g, ambient.b},
-        {},
+        {/* padding */},
         {diffuse.r, diffuse.g, diffuse.b},
-        {},
+        {/* padding */},
         {specular.r, specular.g, specular.b},
         shininess,
     });
   }
 
-  // copy all light data
-   std::vector<PointLight> lights;
+  // ライトのデータをコピーする
+  // TODO:シーンから実際のライトデータをコピーする
+  std::vector<PointLight> lights;
   lights.reserve(2);
   lights.push_back(PointLight{
-      {0.f, 3.f, 2.f},
-      3.f,
-      {1.f, 1.f, 1.f},
-      1.f,
+    {0.f, 3.f, 2.f},
+    3.f,
+    {1.f, 1.f, 1.f},
+    1.f,
   });
-//   lights.push_back(PointLight{
-//     {8.f, 1.f, 8.f},
-//     1.f,
-//     {1.f, 1.f, 1.f},
-//     5.f,
-// });
-// lights.reserve(scene->mNumLights);
+  // lights.push_back(PointLight{
+  //   {8.f, 1.f, 8.f},
+  //   1.f,
+  //   {1.f, 1.f, 1.f},
+  //   5.f,
+  // });
+  // lights.reserve(scene->mNumLights);
   // for (size_t i = 0; i < scene->mNumLights; ++i) {
   //   const aiLight* light = scene->mLights[i];
   //   const auto& p = light->mPosition;
@@ -110,7 +112,7 @@ bool StaticScene::restore() {
   //   });
   // }
 
-  // create OpenGL resources
+  // GLリソースを生成する
   garie::Buffer vbo;
   vbo.gen();
   vbo.bind(GL_ARRAY_BUFFER);
@@ -164,7 +166,7 @@ bool StaticScene::restore() {
   glBufferStorage(GL_DRAW_INDIRECT_BUFFER, commands.size() * sizeof(Command),
                   commands.data(), 0);
 
-  // finalize
+  // 後始末
   camera_center_ = 0.f;
   camera_distance_ = 10.f;
   camera_yaw_ = 0.f;
@@ -199,9 +201,11 @@ bool StaticScene::invalidate() {
 }
 
 void StaticScene::update() {
+  // 射影行列を計算する
   const glm::mat4 proj =
       glm::perspective(glm::radians(45.f), 1280.f / 720.f, 0.1f, lens_depth_);
 
+  // ビュー行列を計算する
   const glm::mat3 rot = glm::yawPitchRoll(camera_yaw_, camera_pitch_, 0.f);
   const glm::vec3 eye = rot * glm::vec3(0.f, 0.f, camera_distance_);
   const glm::vec3 front = rot * glm::vec3(0.f, 0.f, -1.f);
@@ -209,7 +213,7 @@ void StaticScene::update() {
   const glm::mat4 view = glm::lookAt(eye, glm::vec3(0.f, camera_center_, 0.f), up);
   const glm::mat4 view_proj = proj * view;
 
-  // update camera
+  // カメラ情報を更新する
   camera_ubo_.bind(GL_UNIFORM_BUFFER);
   Camera* mapped_camera_ubo =
   reinterpret_cast<Camera*>(glMapBufferRange(

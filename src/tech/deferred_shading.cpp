@@ -6,11 +6,13 @@
 #include <rtdemo/managed.hpp>
 #include <rtdemo/util.hpp>
 
-namespace rtdemo {
+namespace rtdemo::tech {
+namespace {
 RT_MANAGED_TECHNIQUE_INSTANCE(tech, DeferredShading);
+}  // namespace
 
-namespace tech {
 bool DeferredShading::restore() {
+  // シェーダを生成する
   garie::VertexShader p0_vert =
       util::compile_vertex_shader_from_file(
           "assets/shaders/deferred_shading_p0.vert", &log_);
@@ -37,6 +39,7 @@ bool DeferredShading::restore() {
   garie::Program p1_prog = util::link_program(p1_vert, p1_frag, &log_);
   if (!p1_prog) return false;
 
+  // リソースを生成する
   garie::Texture ds_tex;
   ds_tex.gen();
   ds_tex.bind(GL_TEXTURE_2D);
@@ -77,12 +80,12 @@ bool DeferredShading::restore() {
         .build();
 
   if (!util::screen_quad_vao()) {
-    log_ = "failed to init screen-quad geometry";
-    RT_LOG(error, "Failed to init screen-quad");
+    log_ = "スクリーンクアッドのジオメトリの初期化に失敗した";
+    RT_LOG(error, "スクリーンクアッドのジオメトリの初期化に失敗した");
     return false;
   }
 
-  // finalize
+  // 後始末
   p0_prog_ = std::move(p0_prog);
   p1_prog_ = std::move(p1_prog);
   ds_tex_ = std::move(ds_tex);
@@ -93,7 +96,7 @@ bool DeferredShading::restore() {
   fbo_ = std::move(fbo);
   ss_ = std::move(ss);
   //debug_view_ = DebugView::DEFAULT;
-  log_ = "succeeded";
+  log_ = "成功";
   return true;
 }
 
@@ -107,7 +110,7 @@ bool DeferredShading::invalidate() {
   g3_tex_ = garie::Texture();
   fbo_ = garie::Framebuffer();
   ss_ = garie::Sampler();
-  log_ = "not available";
+  log_ = "利用不可";
   return true;
 }
 
@@ -121,12 +124,17 @@ void DeferredShading::update_gui() {
 }
 
 void DeferredShading::apply(scene::Scene& scene) {
+  // FBOをバインドする
   fbo_.bind(GL_DRAW_FRAMEBUFFER);
+
+  // MRTを有効化する
   const GLenum draw_buffers[] = {
       GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
       GL_COLOR_ATTACHMENT3,
   };
   glDrawBuffers(4, draw_buffers);
+
+  // レンダターゲットをクリアする
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glDepthMask(GL_TRUE);
   glStencilMask(GL_TRUE);
@@ -135,16 +143,27 @@ void DeferredShading::apply(scene::Scene& scene) {
   glClearStencil(0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-  // Geometry pass
+  // ジオメトリパスをバインドする
   p0_prog_.use();
   util::default_rs().apply();
   util::default_bs().apply();
   util::depth_test_dss().apply();
+
+  // シーンを描画する
   scene.apply(scene::ApplyType::SHADE);
   #undef OPAQUE
   scene.draw(scene::DrawType::OPAQUE);
 
-  // Lighting pass
+  // MRTを解除する
+  const GLenum restored_draw_buffers[] = {
+      GL_BACK_LEFT, GL_NONE, GL_NONE, GL_NONE,
+  };
+  glDrawBuffers(4, restored_draw_buffers);
+
+  // FBOをアンバインドする
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+  // ライティングパスをバインドする
   p1_prog_.use();
   glUniform1i(11, static_cast<int>(debug_view_));
   ds_tex_.active(0, GL_TEXTURE_2D);
@@ -160,11 +179,8 @@ void DeferredShading::apply(scene::Scene& scene) {
   util::default_rs().apply();
   util::additive_bs().apply();
   util::default_dss().apply();
-  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-  const GLenum restored_draw_buffers[] = {
-      GL_BACK_LEFT, GL_NONE, GL_NONE, GL_NONE,
-  };
-  glDrawBuffers(4, restored_draw_buffers);
+
+  // ライトボリュームを描画する
   if (debug_view_ == DebugView::DEFAULT) {
     scene.apply(scene::ApplyType::LIGHT);
     scene.draw(scene::DrawType::LIGHT_VOLUME);
@@ -173,5 +189,4 @@ void DeferredShading::apply(scene::Scene& scene) {
     util::draw_screen_quad();
   }
 }
-}  // namespace tech
-}  // namespace rtrdemo
+}  // namespace rtrdemo::tech

@@ -1,11 +1,14 @@
 #pragma once
 
 #include <vector>
-#include "../garie.hpp"
+#include <rtdemo/garie.hpp>
 #include "scene.hpp"
 
-namespace rtdemo {
-namespace scene {
+namespace rtdemo::scene {
+/**
+ * @brief 静的なシーン
+ * 
+ */
 class StaticScene final : public Scene {
  public:
   ~StaticScene() noexcept override {}
@@ -23,11 +26,19 @@ class StaticScene final : public Scene {
   void draw(DrawType type) override;
 
  private:
+  /**
+   * @brief 描画モード
+   * 
+   */
   enum class DrawMode : int {
-    DRAW,
-    DRAW_INDIRECT,
+    DRAW,  ///< 従来の描画
+    DRAW_INDIRECT,  ///< Indirect描画
   };
 
+  /**
+   * @brief 間接描画コマンド
+   * 
+   */
   struct Command {
     GLuint index_count;
     GLuint instance_count;
@@ -36,12 +47,12 @@ class StaticScene final : public Scene {
     GLuint base_instance;
   };
 
-  float camera_center_ = 0.f;
-  float camera_distance_ = 0.f;
-  float camera_yaw_ = 0.f;
-  float camera_pitch_ = 0.f;
-  float lens_depth_ = 100.f;
-  DrawMode draw_mode_ = DrawMode::DRAW;
+  float camera_center_ = 0.f;  ///< カメラの中心
+  float camera_distance_ = 0.f;  ///< カメラの距離
+  float camera_yaw_ = 0.f;  ///< カメラのY軸回転角度
+  float camera_pitch_ = 0.f;  ///< カメラのX軸回転角度
+  float lens_depth_ = 100.f;  ///< ファー面の距離
+  DrawMode draw_mode_ = DrawMode::DRAW;  ///< 描画モード
 
   garie::VertexArray vao_;
   garie::Buffer vbo_;
@@ -54,5 +65,4 @@ class StaticScene final : public Scene {
   garie::Buffer dio_;
   std::vector<Command> commands_;
 };
-}  // namespace scene
-}  // namespace rtdemo
+}  // namespace rtdemo::scene

@@ -6,11 +6,13 @@
 #include <rtdemo/managed.hpp>
 #include <rtdemo/util.hpp>
 
-namespace rtdemo {
+namespace rtdemo::tech {
+namespace {
 RT_MANAGED_TECHNIQUE_INSTANCE(tech, TiledForwardShading);
+}  // namespace
 
-namespace tech {
 bool TiledForwardShading::restore() {
+  // シェーダを生成する
   garie::VertexShader p0_vert = util::compile_vertex_shader_from_file(
       "assets/shaders/tiled_forward_shading_p0.vert", &log_);
   if (!p0_vert) return false;
@@ -55,6 +57,7 @@ bool TiledForwardShading::restore() {
   const size_t grid_width = (1280 + 31) / 32;
   const size_t grid_height = (720 + 31) / 32;
 
+  // リソースを生成する
   garie::Texture depth_tex;
   depth_tex.gen();
   depth_tex.bind(GL_TEXTURE_2D);
@@ -84,7 +87,7 @@ bool TiledForwardShading::restore() {
   light_index_ssbo.bind(GL_SHADER_STORAGE_BUFFER);
   glBufferStorage(GL_SHADER_STORAGE_BUFFER, (200 * grid_width * grid_height + 1) * sizeof(uint32_t), nullptr, 0);
 
-  // finalize
+  // 後始末
   p0_prog_ = std::move(p0_prog);
   p1_prog_ = std::move(p1_prog);
   p2_prog_ = std::move(p2_prog);
@@ -95,7 +98,7 @@ bool TiledForwardShading::restore() {
   p2_fbo_ = std::move(p2_fbo);
   light_grid_ssbo_ = std::move(light_grid_ssbo);
   light_index_ssbo_ = std::move(light_index_ssbo);
-  log_ = "succeeded";
+  log_ = "成功";
   return true;
 }
 
@@ -110,7 +113,7 @@ bool TiledForwardShading::invalidate() {
   p2_fbo_ = garie::Framebuffer();
   light_grid_ssbo_ = garie::Buffer();
   light_index_ssbo_ = garie::Buffer();
-  log_ = "not available";
+  log_ = "利用不可";
   return true;
 }
 
@@ -125,77 +128,103 @@ void TiledForwardShading::update_gui() {
 }
 
 void TiledForwardShading::apply(scene::Scene& scene) {
-  // pre-z
-  p0_fbo_.bind(GL_DRAW_FRAMEBUFFER);
-  const GLenum p0_draw_buffers[] = {
-    GL_NONE,
-    GL_NONE,
-    GL_NONE,
-    GL_NONE,
-  };
-  glDrawBuffers(4, p0_draw_buffers);
-  glDepthMask(GL_TRUE);
-  glClearDepthf(1.f);
-  glClear(GL_DEPTH_BUFFER_BIT);
+  // パス0:Pre-Z
+  {
+    // 深度バッファのみのFBOをバインドする
+    p0_fbo_.bind(GL_DRAW_FRAMEBUFFER);
+    const GLenum p0_draw_buffers[] = {
+      GL_NONE,
+      GL_NONE,
+      GL_NONE,
+      GL_NONE,
+    };
+    glDrawBuffers(4, p0_draw_buffers);
 
-  p0_prog_.use();
-  util::default_rs().apply();
-  util::default_bs().apply();
-  util::depth_test_dss().apply();
-  scene.apply(scene::ApplyType::NO_SHADE);
-  #undef OPAQUE
-  scene.draw(scene::DrawType::OPAQUE);
+    // 深度バッファをクリアする
+    glDepthMask(GL_TRUE);
+    glClearDepthf(1.f);
+    glClear(GL_DEPTH_BUFFER_BIT);
 
-  // light assignment
-  p1_prog_.use();
-  depth_tex_.active(0, GL_TEXTURE_2D);
-  light_grid_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 20);
-  light_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 21);
-  scene.apply(scene::ApplyType::LIGHT);
-  glDispatchCompute(40, 23, 1);
-  //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    // バインド
+    p0_prog_.use();
+    util::default_rs().apply();
+    util::default_bs().apply();
+    util::depth_test_dss().apply();
 
-  // shading
-  p2_fbo_.bind(GL_DRAW_FRAMEBUFFER);
-  const GLenum p2_draw_buffers[] = {
-    GL_COLOR_ATTACHMENT0,
-    GL_NONE,
-    GL_NONE,
-    GL_NONE,
-  };
-  glDrawBuffers(4, p2_draw_buffers);
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  glClearColor(0.f, 0.f, 0.f, 0.f);
-  glClear(GL_COLOR_BUFFER_BIT);
+    // シーンを描画する
+    scene.apply(scene::ApplyType::NO_SHADE);
+    #undef OPAQUE
+    scene.draw(scene::DrawType::OPAQUE);
+  }
 
-  p2_prog_.use();
-  glUniform1ui(11, static_cast<int>(debug_view_));  
-  light_grid_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 10);
-  light_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 11);
-  util::default_rs().apply();
-  util::alpha_blending_bs().apply();
-  util::depth_test_no_write_dss().apply();
-  scene.apply(scene::ApplyType::SHADE);
-  #undef OPAQUE
-  scene.draw(scene::DrawType::OPAQUE);
+  // パス1:ライト割り当て
+  {
+    // バインド
+    p1_prog_.use();
+    depth_tex_.active(0, GL_TEXTURE_2D);
+    light_grid_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 20);
+    light_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 21);
 
-  // postprocess
-  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-  const GLenum p3_draw_buffers[] = {
-    GL_BACK_LEFT,
-    GL_NONE,
-    GL_NONE,
-    GL_NONE,
-  };
-  glDrawBuffers(4, p3_draw_buffers);
+    // ディスパッチ
+    scene.apply(scene::ApplyType::LIGHT);
+    glDispatchCompute(40, 23, 1);
+    //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+  }
 
-  p3_prog_.use();
-  rt0_tex_.active(0, GL_TEXTURE_2D);
-  util::default_rs().apply();
-  util::default_bs().apply();
-  util::default_dss().apply();
-  util::screen_quad_vao().bind();
-  util::draw_screen_quad();
+  // パス2:シェーディング
+  {
+    // 深度とカラーを持つFBOをバインドする
+    p2_fbo_.bind(GL_DRAW_FRAMEBUFFER);
+    const GLenum p2_draw_buffers[] = {
+      GL_COLOR_ATTACHMENT0,
+      GL_NONE,
+      GL_NONE,
+      GL_NONE,
+    };
+    glDrawBuffers(4, p2_draw_buffers);
+
+    // レンダターゲットをクリアする
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glClearColor(0.f, 0.f, 0.f, 0.f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // パイプラインをバインドする
+    p2_prog_.use();
+    glUniform1ui(11, static_cast<int>(debug_view_));  
+    light_grid_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 10);
+    light_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 11);
+    util::default_rs().apply();
+    util::alpha_blending_bs().apply();
+    util::depth_test_no_write_dss().apply();
+
+    // シーンを描画する
+    scene.apply(scene::ApplyType::SHADE);
+    #undef OPAQUE
+    scene.draw(scene::DrawType::OPAQUE);
+  }
+
+  // パス3:ポストプロセッシング
+  {
+    // バックバッファをフレームバッファにバインドする
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    const GLenum p3_draw_buffers[] = {
+      GL_BACK_LEFT,
+      GL_NONE,
+      GL_NONE,
+      GL_NONE,
+    };
+    glDrawBuffers(4, p3_draw_buffers);
+
+    // バインド
+    p3_prog_.use();
+    rt0_tex_.active(0, GL_TEXTURE_2D);
+    util::default_rs().apply();
+    util::default_bs().apply();
+    util::default_dss().apply();
+
+    // 描画する
+    util::screen_quad_vao().bind();
+    util::draw_screen_quad();
+  }
 }
-}  // namespace tech
-}  // namespace rtrdemo
+}  // namespace rtrdemo::tech

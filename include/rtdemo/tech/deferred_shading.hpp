@@ -4,8 +4,11 @@
 #include <rtdemo/garie.hpp>
 #include "technique.hpp"
 
-namespace rtdemo {
-namespace tech {
+namespace rtdemo::tech {
+/**
+ * @brief Deferred Shading
+ * 
+ */
 class DeferredShading final : public Technique {
  public:
   ~DeferredShading() noexcept override {}
@@ -21,19 +24,23 @@ class DeferredShading final : public Technique {
   void apply(scene::Scene& scene) override;
 
  private:
+  /**
+   * @brief デバッグ表示
+   * 
+   */
   enum class DebugView : int {
-    DEFAULT,
-    DEPTH,
-    NORMAL,
-    AMBIENT,
-    DIFFUSE,
-    SPECULAR,
-    SPECULAR_POWER,
-    RECONSTRUCTED_POSITION,
+    DEFAULT,  ///< 通常
+    DEPTH,  ///< 深度
+    NORMAL,  ///< 法線
+    AMBIENT,  ///< アンビエント
+    DIFFUSE,  ///< ディフューズ
+    SPECULAR,  ///< スペキュラ
+    SPECULAR_POWER,  ///< スペキュラパワー
+    RECONSTRUCTED_POSITION,  ///< 再構築された位置
   };
 
-  garie::Program p0_prog_;
-  garie::Program p1_prog_;
+  garie::Program p0_prog_;  ///< Gパスのプログラム
+  garie::Program p1_prog_;  ///< Lパスのプログラム
   garie::Texture ds_tex_;
   garie::Texture g0_tex_;
   garie::Texture g1_tex_;
@@ -42,7 +49,6 @@ class DeferredShading final : public Technique {
   garie::Framebuffer fbo_;
   garie::Sampler ss_;
   DebugView debug_view_ = DebugView::DEFAULT;
-  std::string log_;
+  std::string log_;  // シェーダのエラーログ
 };
-}  // namespace tech
-}  // namespace rtdemo
+}  // namespace rtdemo::tech

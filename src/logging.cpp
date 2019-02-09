@@ -1,8 +1,7 @@
 #include <rtdemo/logging.hpp>
 #include <spdlog/sinks/stdout_sinks.h>
 
-namespace rtdemo {
-namespace logging {
+namespace rtdemo::logging {
 namespace {
 std::shared_ptr<spdlog::logger> console;
 }  // namespace
@@ -14,5 +13,4 @@ std::shared_ptr<spdlog::logger> get_logger() {
   }
   return console;
 }
-}  // namespace logging
-}  // namespace rtdemo
+}  // namespace rtdemo::logging

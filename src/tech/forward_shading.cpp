@@ -6,11 +6,13 @@
 #include <rtdemo/managed.hpp>
 #include <rtdemo/util.hpp>
 
-namespace rtdemo {
+namespace rtdemo::tech {
+namespace {
 RT_MANAGED_TECHNIQUE_INSTANCE(tech, ForwardShading);
+}  // namespace
 
-namespace tech {
 bool ForwardShading::restore() {
+  // シェーダを読み込む
   garie::VertexShader vert = util::compile_vertex_shader_from_file(
       "assets/shaders/forward_shading.vert", &log_);
   if (!vert) return false;
@@ -23,15 +25,15 @@ bool ForwardShading::restore() {
   garie::Program prog = util::link_program(vert, frag, &log_);
   if (!prog) return false;
 
-  // finalize
+  // 後始末
   prog_ = std::move(prog);
-  log_ = "succeeded";
+  log_ = "成功";
   return true;
 }
 
 bool ForwardShading::invalidate() {
   prog_ = garie::Program();
-  log_ = "not available";
+  log_ = "利用不可";
   return true;
 }
 
@@ -54,5 +56,4 @@ void ForwardShading::apply(scene::Scene& scene) {
   #undef OPAQUE
   scene.draw(scene::DrawType::OPAQUE);
 }
-}  // namespace tech
-}  // namespace rtrdemo
+}  // namespace rtrdemo::tech

@@ -4,8 +4,11 @@
 #include <rtdemo/garie.hpp>
 #include "technique.hpp"
 
-namespace rtdemo {
-namespace tech {
+namespace rtdemo::tech {
+/**
+ * @brief Tiled Forward Shading
+ * 
+ */
 class TiledForwardShading final : public Technique {
  public:
   ~TiledForwardShading() noexcept override {}
@@ -21,21 +24,29 @@ class TiledForwardShading final : public Technique {
   void apply(scene::Scene& scene) override;
 
 private:
+  /**
+   * @brief グリッドセル
+   * 
+   */
   struct GridCell {
     uint32_t first;
     uint32_t count;
   };
 
+  /**
+   * @brief デバッグ表示
+   * 
+   */
   enum class DebugView : int {
-    DEFAULT,
-    POSITION,
-    NORMAL,
-    AMBIENT,
-    DIFFUSE,
-    SPECULAR,
-    SPECULAR_POWER,
-    TILE_INDEX,
-    TILE_LIGHT_COUNT,
+    DEFAULT,  ///< 通常
+    POSITION,  ///< 位置
+    NORMAL,  ///< 法線
+    AMBIENT,  ///< アンビエント
+    DIFFUSE,  ///< ディフューズ
+    SPECULAR,  ///< スペキュラ
+    SPECULAR_POWER,  ///< スペキュラパワー
+    TILE_INDEX,  ///< タイル番号
+    TILE_LIGHT_COUNT,  ///< タイルのライト数
   };
 
   garie::Program p0_prog_;
@@ -50,7 +61,6 @@ private:
   garie::Buffer light_index_ssbo_;
   DebugView debug_view_ = DebugView::DEFAULT;
   GridCell cell_ = {};
-  std::string log_;
+  std::string log_;  ///< シェーダのエラーログ
 };
-}  // namespace tech
-}  // namespace rtdemo
+}  // namespace rtdemo::tech

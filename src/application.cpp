@@ -7,11 +7,13 @@
 
 namespace rtdemo {
 namespace {
+// 管理されたシーンとテクニックのリスト
 std::vector<const char*> scene_names;
 std::vector<scene::Scene*> scenes;
 std::vector<const char*> technique_names;
 std::vector<tech::Technique*> techniques;
 
+// 現在選択しているシーンとテクニック
 int current_scene_index = -1;
 scene::Scene* current_scene = nullptr;
 int current_technique_index = -1;
@@ -29,6 +31,7 @@ void register_managed_technique(const char* name, tech::Technique* technique) {
 }
 
 bool Application::init() {
+  // デフォルトのシーンを初期化する
   if (scenes.empty()) {
     current_scene_index = -1;
     current_scene = nullptr;
@@ -38,6 +41,7 @@ bool Application::init() {
     if (current_scene) current_scene->restore();
   }
 
+  // デフォルトのテクニックを初期化する
   if (techniques.empty()) {
     current_technique_index = -1;
     current_technique = nullptr;
@@ -52,13 +56,13 @@ bool Application::init() {
 
 void Application::update() {
   if (ImGui::Combo("current scene", &current_scene_index, scene_names.data(),
-                   scene_names.size())) {
+                   static_cast<int>(scene_names.size()))) {
     current_scene = scenes[current_scene_index];
     if (current_scene) current_scene->restore();
   }
 
   if (ImGui::Combo("current technique", &current_technique_index,
-                   technique_names.data(), technique_names.size())) {
+                   technique_names.data(), static_cast<int>(technique_names.size()))) {
     current_technique = techniques[current_technique_index];
     if (current_technique) current_technique->restore();
   }

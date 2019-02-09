@@ -1,4 +1,7 @@
 #include <rtdemo/gui.hpp>
+#ifdef WIN32
+#include <Windows.h>
+#endif
 #include <iostream>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -8,8 +11,8 @@
 
 namespace rtdemo::gui {
 namespace {
-constexpr size_t INDICES_SIZE = 6 * 1024 * sizeof(ImDrawIdx);
-constexpr size_t VERTICES_SIZE = 4 * 1024 * sizeof(ImDrawVert);
+constexpr size_t INDICES_SIZE = 6 * 1024 * sizeof(ImDrawIdx);  // インデックスバッファのサイズ
+constexpr size_t VERTICES_SIZE = 4 * 1024 * sizeof(ImDrawVert);  // 頂点バッファのサイズ
 }  // namespace
 
 bool Gui::init(GLFWwindow* window) {
@@ -19,6 +22,7 @@ bool Gui::init(GLFWwindow* window) {
 
   // スタイルを設定する
   ImGui::StyleColorsDark();
+  // ImGui::StyleColorsLight();
 
   // 初期化
   ImGuiIO& io = ImGui::GetIO();
