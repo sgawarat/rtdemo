@@ -26,6 +26,11 @@
 - `gl[Color|Depth|Stencil]Mask`を`GL_TRUE`にしてみる。
     - `glClear`も書き込みマスクの影響を受ける。
 
+##### バインドしても書き込み先が変化しない
+
+- `glDrawBuffers`はFBOの一部なので、FBO生成時に設定する。
+    - https://stackoverflow.com/questions/30980657/opengl-is-gldrawbuffers-modification-stored-in-a-fbo-no
+
 #### バッファ
 
 ##### `glBindBufferRange`でバインドしたバッファがシェーダから見えない。

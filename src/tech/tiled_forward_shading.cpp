@@ -132,13 +132,6 @@ void TiledForwardShading::apply(scene::Scene& scene) {
   {
     // 深度バッファのみのFBOをバインドする
     p0_fbo_.bind(GL_DRAW_FRAMEBUFFER);
-    const GLenum p0_draw_buffers[] = {
-      GL_NONE,
-      GL_NONE,
-      GL_NONE,
-      GL_NONE,
-    };
-    glDrawBuffers(4, p0_draw_buffers);
 
     // 深度バッファをクリアする
     glDepthMask(GL_TRUE);
@@ -175,13 +168,6 @@ void TiledForwardShading::apply(scene::Scene& scene) {
   {
     // 深度とカラーを持つFBOをバインドする
     p2_fbo_.bind(GL_DRAW_FRAMEBUFFER);
-    const GLenum p2_draw_buffers[] = {
-      GL_COLOR_ATTACHMENT0,
-      GL_NONE,
-      GL_NONE,
-      GL_NONE,
-    };
-    glDrawBuffers(4, p2_draw_buffers);
 
     // レンダターゲットをクリアする
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -207,13 +193,13 @@ void TiledForwardShading::apply(scene::Scene& scene) {
   {
     // バックバッファをフレームバッファにバインドする
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    const GLenum p3_draw_buffers[] = {
-      GL_BACK_LEFT,
-      GL_NONE,
-      GL_NONE,
-      GL_NONE,
-    };
-    glDrawBuffers(4, p3_draw_buffers);
+    // const GLenum p3_draw_buffers[] = {
+    //   GL_BACK_LEFT,
+    //   GL_NONE,
+    //   GL_NONE,
+    //   GL_NONE,
+    // };
+    // glDrawBuffers(4, p3_draw_buffers);
 
     // バインド
     p3_prog_.use();

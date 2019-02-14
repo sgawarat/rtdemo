@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <vector>
 #include <GL/glew.h>
 
 // OpenGLのRAIIラッパー
@@ -540,6 +541,7 @@ class FramebufferBuilder final {
                                     GLint level = 0) noexcept {
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index,
                          texture.id(), level);
+    draw_buffers_.push_back(GL_COLOR_ATTACHMENT0 + index);
     return *this;
   }
 
@@ -562,6 +564,7 @@ class FramebufferBuilder final {
                                        GLint level = 0) noexcept {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, target,
                            texture.id(), level);
+    draw_buffers_.push_back(GL_COLOR_ATTACHMENT0 + index);
     return *this;
   }
 
@@ -586,6 +589,7 @@ class FramebufferBuilder final {
                                           GLint layer = 0) noexcept {
     glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index,
                               texture.id(), level, layer);
+    draw_buffers_.push_back(GL_COLOR_ATTACHMENT0 + index);
     return *this;
   }
 
@@ -607,6 +611,7 @@ class FramebufferBuilder final {
   }
 
   Framebuffer build() noexcept {
+    glDrawBuffers(static_cast<GLsizei>(draw_buffers_.size()), draw_buffers_.data());
     const GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     return std::move(framebuffer_);
@@ -614,6 +619,7 @@ class FramebufferBuilder final {
 
  private:
   Framebuffer framebuffer_;
+  std::vector<GLenum> draw_buffers_;
 };
 
 /**
