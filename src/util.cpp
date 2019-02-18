@@ -30,7 +30,7 @@ inline garie::Shader<TYPE> compile_shader_from_file(const char* path,
 
   // シェーダを生成する
   shader.gen();
-  if (!shader.compile(code.data(), code.size())) {
+  if (!shader.compile(code.data(), static_cast<GLint>(code.size()))) {
     static GLchar info_log[1024];
     shader.get_info_log(1024, info_log);
     if (log_ptr) *log_ptr = info_log;
