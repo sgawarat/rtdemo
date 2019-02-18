@@ -3,7 +3,6 @@
 namespace rtdemo::scene {
 /**
  * @brief バインドするリソースの種類
- * 
  */
 enum class ApplyType {
   /**
@@ -13,11 +12,12 @@ enum class ApplyType {
    * SSBO[0] = リソース番号
    * SSBO[1] = マテリアル
    * SSBO[2] = ライト
+   * SSBO[3] = シャドウ
    */
   SHADE,
 
   /**
-   * @brief シェーディングあり
+   * @brief シェーディングなし
    * 
    * UBO[0] = カメラ
    */
@@ -30,6 +30,13 @@ enum class ApplyType {
    * SSBO[0] = ライト
    */
   LIGHT,
+
+  /**
+   * @brief シャドウ情報のみ
+   * 
+   * SSBO[0] = シャドウ
+   */
+  SHADOW,
 };
 
 /**

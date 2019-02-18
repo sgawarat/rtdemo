@@ -93,7 +93,7 @@ bool StaticScene::restore() {
   lights.reserve(2);
   lights.push_back(PointLight{
     {0.f, 3.f, 2.f},
-    3.f,
+    7.f,
     {1.f, 1.f, 1.f},
     1.f,
   });
@@ -111,6 +111,13 @@ bool StaticScene::restore() {
   //     {p.x, p.y, p.z},
   //   });
   // }
+
+  // シャドウキャスタのデータをコピーする
+  std::vector<ShadowCaster> shadow_casters;
+  shadow_casters.reserve(2);
+  shadow_casters.push_back(ShadowCaster{
+    glm::perspective(glm::radians(90.f), 1.f, 0.01f, 100.f) * glm::lookAt(glm::vec3(0.f, 5.f, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f)),
+  });
 
   // GLリソースを生成する
   garie::Buffer vbo;
@@ -160,6 +167,12 @@ bool StaticScene::restore() {
   glBufferStorage(GL_SHADER_STORAGE_BUFFER,
                   lights.size() * sizeof(PointLight), lights.data(), 0);
 
+  garie::Buffer shadow_ssbo;
+  shadow_ssbo.gen();
+  shadow_ssbo.bind(GL_SHADER_STORAGE_BUFFER);
+  glBufferStorage(GL_SHADER_STORAGE_BUFFER,
+                  shadow_casters.size() * sizeof(ShadowCaster), shadow_casters.data(), 0);
+
   garie::Buffer dio;
   dio.gen();
   dio.bind(GL_DRAW_INDIRECT_BUFFER);
@@ -180,6 +193,7 @@ bool StaticScene::restore() {
   resource_index_ssbo_ = std::move(resource_index_ssbo);
   material_ssbo_ = std::move(material_ssbo);
   light_ssbo_ = std::move(light_ssbo);
+  shadow_ssbo_ = std::move(shadow_ssbo);
   light_count_ = lights.size();
   dio_ = std::move(dio);
   commands_ = std::move(commands);
@@ -194,6 +208,7 @@ bool StaticScene::invalidate() {
   resource_index_ssbo_ = garie::Buffer();
   material_ssbo_ = garie::Buffer();
   light_ssbo_ = garie::Buffer();
+  shadow_ssbo_ = garie::Buffer();
   light_count_ = 0;
   dio_ = garie::Buffer();
   commands_.clear();
@@ -249,6 +264,7 @@ void StaticScene::apply(ApplyType type) {
       resource_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
       material_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 1);
       light_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 2);
+      shadow_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 3);
       break;
     }
     case ApplyType::NO_SHADE: {
@@ -259,6 +275,10 @@ void StaticScene::apply(ApplyType type) {
       camera_ubo_.bind_base(GL_UNIFORM_BUFFER, 0);
       
       light_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
+      break;
+    }
+    case ApplyType::SHADOW: {
+      shadow_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
       break;
     }
   }

@@ -61,6 +61,7 @@ class StaticScene final : public Scene {
   garie::Buffer resource_index_ssbo_;
   garie::Buffer material_ssbo_;
   garie::Buffer light_ssbo_;
+  garie::Buffer shadow_ssbo_;
   size_t light_count_ = 0;
   garie::Buffer dio_;
   std::vector<Command> commands_;

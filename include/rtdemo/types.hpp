@@ -67,4 +67,12 @@ struct PointLight {
   glm::vec3 color;  ///< 色
   float intensity;  ///< 強度
 };
+
+/**
+ * @brief シャドウキャスタ
+ * 
+ */
+struct ShadowCaster {
+  glm::mat4 view_proj;  ///< ビュー行列×射影行列
+};
 }  // namespace rtdemo
