@@ -336,6 +336,9 @@ void Gui::render() {
       idx_buffer_offset += pcmd->ElemCount;
     }
   }
+
+
+  glViewport(0, 0, 1280, 720);
   glDisable(GL_SCISSOR_TEST);
 }
 

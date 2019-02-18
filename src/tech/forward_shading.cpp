@@ -47,6 +47,18 @@ void ForwardShading::update_gui() {
 }
 
 void ForwardShading::apply(scene::Scene& scene) {
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+  glViewport(0, 0, 1280, 720);
+  glScissor(0, 0, 1280, 720);
+
+  // バックバッファをクリアする
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDepthMask(GL_TRUE);
+  glClearColor(0.f, 0.f, 0.f, 0.f);
+  glClearDepthf(1.f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
   prog_.use();
   glUniform1ui(11, static_cast<int>(debug_view_));  
   util::default_rs().apply();

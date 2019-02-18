@@ -93,15 +93,6 @@ int main() {
 
       gui_.new_frame();
 
-      // バックバッファをクリアする
-      glViewport(0, 0, 1280, 720);
-      glDisable(GL_SCISSOR_TEST);
-      glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-      glDepthMask(GL_TRUE);
-      glClearColor(0.f, 0.f, 0.f, 0.f);
-      glClearDepthf(1.f);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
       app.update();
 
       gui_.render();

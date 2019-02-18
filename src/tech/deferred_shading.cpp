@@ -127,6 +127,9 @@ void DeferredShading::apply(scene::Scene& scene) {
   // FBOをバインドする
   fbo_.bind(GL_DRAW_FRAMEBUFFER);
 
+  glViewport(0, 0, 1280, 720);
+  glScissor(0, 0, 1280, 720);
+
   // レンダターゲットをクリアする
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glDepthMask(GL_TRUE);
@@ -147,13 +150,14 @@ void DeferredShading::apply(scene::Scene& scene) {
   scene.draw(scene::DrawType::OPAQUE);
 
   // MRTを解除する
-  // const GLenum restored_draw_buffers[] = {
-  //     GL_BACK_LEFT, GL_NONE, GL_NONE, GL_NONE,
-  // };
-  // glDrawBuffers(4, restored_draw_buffers);
-
-  // FBOをアンバインドする
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+  // バックバッファをクリアする
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDepthMask(GL_TRUE);
+  glClearColor(0.f, 0.f, 0.f, 0.f);
+  glClearDepthf(1.f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // ライティングパスをバインドする
   p1_prog_.use();
