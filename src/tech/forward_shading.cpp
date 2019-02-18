@@ -53,7 +53,6 @@ void ForwardShading::apply(scene::Scene& scene) {
   util::alpha_blending_bs().apply();
   util::depth_test_dss().apply();
   scene.apply(scene::ApplyType::SHADE);
-  #undef OPAQUE
   scene.draw(scene::DrawType::OPAQUE);
 }
 }  // namespace rtrdemo::tech

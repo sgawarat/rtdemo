@@ -146,7 +146,6 @@ void TiledForwardShading::apply(scene::Scene& scene) {
 
     // シーンを描画する
     scene.apply(scene::ApplyType::NO_SHADE);
-    #undef OPAQUE
     scene.draw(scene::DrawType::OPAQUE);
   }
 
@@ -185,7 +184,6 @@ void TiledForwardShading::apply(scene::Scene& scene) {
 
     // シーンを描画する
     scene.apply(scene::ApplyType::SHADE);
-    #undef OPAQUE
     scene.draw(scene::DrawType::OPAQUE);
   }
 

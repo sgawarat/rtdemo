@@ -44,6 +44,9 @@ elseif(WIN32)
         /source-charset:utf-8
     )
     target_compile_definitions(rendering_techniques PRIVATE
+        WIN32_LEAN_AND_MEAN
+        NOGDI
+        NOMINMAX
         GLFW_EXPOSE_NATIVE_WIN32
     )
 endif(UNIX)
