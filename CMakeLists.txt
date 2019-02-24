@@ -71,31 +71,7 @@ if(UNIX)
     )
 endif(UNIX)
 
-set(SHADER_SOURCES
-    forward_shading.vert
-    forward_shading.frag
-    deferred_shading_p0.vert
-    deferred_shading_p0.frag
-    deferred_shading_p1.vert
-    deferred_shading_p1.frag
-    tiled_forward_shading_p0.vert
-    tiled_forward_shading_p0.frag
-    tiled_forward_shading_p1.comp
-    tiled_forward_shading_p2.vert
-    tiled_forward_shading_p2.frag
-    tiled_forward_shading_p3.vert
-    tiled_forward_shading_p3.frag
-    shadow_mapping_p0.vert
-    shadow_mapping_p0.frag
-    shadow_mapping_p1.vert
-    shadow_mapping_p1.frag
-)
-
-set(GLSLC_BIN C:/VulkanSDK/1.1.92.1/Bin/glslangValidator.exe)
-add_custom_target(glsl ALL
-    ${GLSLC_BIN} ${SHADER_SOURCES}
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/assets/shaders
-    COMMENT "Validating shaders")
+add_subdirectory(assets)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
