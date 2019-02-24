@@ -14,7 +14,7 @@ inline garie::Shader<TYPE> compile_shader_from_file(const char* path,
   std::ifstream ifs(path);
   if (!ifs) {
     if (log_ptr) *log_ptr = fmt::format("{}を開けない", path);
-    RT_LOG(error, "ファイルのオープンに失敗した (path:{})", path);
+    RT_ERROR("ファイルのオープンに失敗した (path:{})", path);
     return garie::Shader<TYPE>{};
   }
 
@@ -34,7 +34,7 @@ inline garie::Shader<TYPE> compile_shader_from_file(const char* path,
     static GLchar info_log[1024];
     shader.get_info_log(1024, info_log);
     if (log_ptr) *log_ptr = info_log;
-    RT_LOG(error, "シェーダのコンパイルに失敗した (type:{}, info_log:{})", TYPE,
+    RT_ERROR("シェーダのコンパイルに失敗した (type:{}, info_log:{})", TYPE,
            info_log);
     return garie::Shader<TYPE>{};
   }
@@ -51,7 +51,7 @@ inline garie::Program link_shader_program(const garie::Shader<TYPES>&... shaders
     static GLchar info_log[1024];
     prog.get_info_log(1024, info_log);
     if (log_ptr) *log_ptr = info_log;
-    RT_LOG(error, "シェーダプログラムのリンクに失敗した (info_log:{})", info_log);
+    RT_ERROR("シェーダプログラムのリンクに失敗した (info_log:{})", info_log);
     return garie::Program();
   }
   return prog;

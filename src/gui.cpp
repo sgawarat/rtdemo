@@ -86,8 +86,7 @@ bool Gui::init(GLFWwindow* window) {
   if (!vert.compile(vert_code)) {
     GLchar info_log[1024];
     vert.get_info_log(1024, info_log);
-    RT_LOG(error, "GUIの頂点シェーダのコンパイルに失敗した。(info_log:{})",
-           info_log);
+    RT_ERROR("GUIの頂点シェーダのコンパイルに失敗した。(info_log:{})", info_log);
     return false;
   }
 
@@ -110,8 +109,7 @@ bool Gui::init(GLFWwindow* window) {
   if (!frag.compile(frag_code)) {
     GLchar info_log[1024];
     frag.get_info_log(1024, info_log);
-    RT_LOG(error, "GUIのフラグメントシェーダのコンパイルに失敗した。(info_log:{})",
-           info_log);
+    RT_ERROR("GUIのフラグメントシェーダのコンパイルに失敗した。(info_log:{})", info_log);
     return false;
   }
 
@@ -120,9 +118,8 @@ bool Gui::init(GLFWwindow* window) {
   prog.gen();
   if (!prog.link(vert, frag)) {
     GLchar info_log[1024];
-    prog.get_info_log(1024, info_log);
-    RT_LOG(error, "GUIのシェーダプログラムのリンクに失敗した。(info_log:{})",
-           info_log);
+    prog_.get_info_log(1024, info_log);
+    RT_ERROR("GUIのシェーダプログラムのリンクに失敗した。(info_log:{})", info_log);
     return false;
   }
 

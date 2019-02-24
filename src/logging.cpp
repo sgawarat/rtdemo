@@ -1,16 +1,36 @@
 #include <rtdemo/logging.hpp>
+#include <cstdlib>
 #include <spdlog/sinks/stdout_sinks.h>
 
-namespace rtdemo::logging {
-namespace {
-std::shared_ptr<spdlog::logger> console;
-}  // namespace
-
-std::shared_ptr<spdlog::logger> get_logger() {
-  if (!console) {
-    console = spdlog::stdout_logger_mt("console");
-    console->set_level(spdlog::level::trace);
-  }
-  return console;
+namespace rtdemo {
+Logger& Logger::get() noexcept {
+  static Logger self;
+  return self;
 }
-}  // namespace rtdemo::logging
+
+bool Logger::init(spdlog::level::level_enum level) {
+#ifdef WIN32
+  // Windowsアプリケーションでもコマンドプロンプトを表示させる
+  static FILE* stream = nullptr;
+  freopen_s(&stream, "CONOUT$", "w", stdout);
+#endif
+
+  logger_ = spdlog::stdout_logger_mt("console");
+  if (!logger_) return false;
+
+  logger_->set_level(level);
+
+  return true;
+}
+
+void Logger::terminate() {
+  // ログを確認するためにコンソールへのキー入力を要求する
+  if (max_level_ >= spdlog::level::warn) {
+#ifdef WIN32
+    system("PAUSE");
+#else
+    system("read -p \"Press Enter key to continue...\"");
+#endif
+  }
+}
+}  // namespace rtdemo
