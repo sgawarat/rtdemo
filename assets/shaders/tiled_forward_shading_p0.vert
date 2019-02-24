@@ -15,7 +15,7 @@ layout(binding = 0) uniform CameraUniform {
 
 layout(location = 0) in vec3 position;
 
-layout(location = 10) uniform uint DRAW_ID; // HACK
+layout(location = 0) uniform uint DRAW_ID;
 
 void main() {
     vec4 position_c = CAMERA.view_proj * vec4(position, 1);

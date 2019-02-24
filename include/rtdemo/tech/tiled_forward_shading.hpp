@@ -23,6 +23,8 @@ class TiledForwardShading final : public Technique {
   void apply(Scene& scene) override;
 
 private:
+  static constexpr size_t MAX_LIGHT_COUNT = 200;
+
   /**
    * @brief グリッドセル
    */
@@ -54,10 +56,12 @@ private:
   garie::Texture rt0_tex_;
   garie::Framebuffer p0_fbo_;
   garie::Framebuffer p2_fbo_;
+  garie::Viewport viewport_;
   garie::Buffer light_grid_ssbo_;
   garie::Buffer light_index_ssbo_;
   DebugView debug_view_ = DebugView::DEFAULT;
-  GridCell cell_ = {};
+  size_t grid_width_ = 0;
+  size_t grid_height_ = 0;
   std::string log_;  ///< シェーダのエラーログ
 };
 }  // namespace rtdemo::tech

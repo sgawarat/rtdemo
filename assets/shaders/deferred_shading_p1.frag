@@ -1,5 +1,6 @@
 #version 450
 
+// カメラ
 struct Camera {
     mat4 view_proj;
     mat4 view;
@@ -9,35 +10,39 @@ struct Camera {
     mat4 proj_inv;
     vec3 position_w;
 };
+layout(binding = 0) uniform CameraUniform {
+    Camera CAMERA;
+};
+
+// ライト
 struct PointLight {
     vec3 position_w;
     float radius;
     vec3 color;
     float intensity;
 };
-
-layout(binding = 0) uniform CameraUniform {
-    Camera CAMERA;
-};
-
 layout(binding = 0) buffer LightBuffer {
     PointLight LIGHTS[];
 };
 
-layout(binding = 0) uniform sampler2D DEPTH;
-layout(binding = 1) uniform sampler2D GBUFFER0;
-layout(binding = 2) uniform sampler2D GBUFFER1;
-layout(binding = 3) uniform sampler2D GBUFFER2;
-layout(binding = 4) uniform sampler2D GBUFFER3;
+// Gバッファ
+layout(binding = 8) uniform sampler2D DEPTH;
+layout(binding = 9) uniform sampler2D GBUFFER0;
+layout(binding = 10) uniform sampler2D GBUFFER1;
+layout(binding = 11) uniform sampler2D GBUFFER2;
+layout(binding = 12) uniform sampler2D GBUFFER3;
 
+// 定数
+layout(location = 0) uniform int DRAW_ID;
+layout(location = 32) uniform int DEBUG_VIEW;
+
+// 入力
 in VertexData {
     layout(location = 0) vec3 position_c;
 } IN;
 
+// 出力
 layout(location = 0) out vec4 frag_color;
-
-layout(location = 10) uniform int DRAW_ID;
-layout(location = 11) uniform int DEBUG_VIEW;
 
 void main() {
     vec2 texcoord = IN.position_c.xy * 0.5 + vec2(0.5);

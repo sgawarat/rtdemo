@@ -9,40 +9,41 @@ struct Camera {
     mat4 proj_inv;
     vec3 position_w;
 };
-struct TileFrustum {
-    vec4 planes_v[4];
+layout(binding = 0) uniform CameraUniform {
+    Camera CAMERA;
 };
+
 struct PointLight {
     vec3 position_w;
     float radius;
     vec3 color;
     float intensity;
 };
-struct GridCell {
-    uint first;
-    uint count;
-};
-
-layout(binding = 0) uniform CameraUniform {
-    Camera CAMERA;
-};
-
 layout(binding = 0) buffer LightBuffer {
     PointLight LIGHTS[];
+};
+
+struct TileFrustum {
+    vec4 planes_v[4];
 };
 // layout(binding = 1) buffer FrustumBuffer {
 //     FrustumSide FRASTA[];
 // }
 
-layout(binding = 10) buffer LightGridBuffer {
+struct GridCell {
+    uint first;
+    uint count;
+};
+layout(binding = 8) buffer LightGridBuffer {
     GridCell GRID_CELLS[];
 };
-layout(binding = 11) buffer LightIndexBuffer {
+
+layout(binding = 9) buffer LightIndexBuffer {
     uint LIGHT_INDEX_COUNT;
     uint LIGHT_INDICES[];
 };
 
-layout(binding = 0) uniform sampler2D DEPTH;
+layout(binding = 8) uniform sampler2D DEPTH;
 
 // in uvec3 gl_NumWorkGroups;
 // in uvec3 gl_WorkGroupID;

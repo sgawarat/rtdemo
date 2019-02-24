@@ -43,6 +43,43 @@ inline garie::Shader<TYPE> compile_shader_from_file(const char* path,
   return shader;
 }
 
+template <GLenum TYPE>
+inline garie::Shader<TYPE> load_shader_from_file(const char* path,
+                                             std::string* log_ptr) {
+  garie::Shader<TYPE> shader;
+
+  // ファイルを開く
+  std::ifstream ifs(path, std::ios::in | std::ios::binary);
+  if (!ifs) {
+    if (log_ptr) *log_ptr = fmt::format("{}を開けない", path);
+    RT_ERROR("ファイルのオープンに失敗した (path:{})", path);
+    return garie::Shader<TYPE>{};
+  }
+
+  // ファイルサイズを計算する
+  const auto end = ifs.seekg(0, std::ios::end).tellg();
+  const auto beg = ifs.seekg(0, std::ios::beg).tellg();
+  const auto length = end - beg;
+
+  // ファイルから読み込む
+  static std::vector<char> binary;
+  binary.resize(length);
+  ifs.read(binary.data(), binary.size());
+
+  // シェーダを生成する
+  shader.gen();
+  if (!shader.load(binary.data(), static_cast<GLsizei>(binary.size()))) {
+    static GLchar info_log[1024];
+    shader.get_info_log(1024, info_log);
+    if (log_ptr) *log_ptr = info_log;
+    RT_ERROR("シェーダのコンパイルに失敗した (type:{}, info_log:{})", TYPE,
+           info_log);
+    return garie::Shader<TYPE>{};
+  }
+
+  return shader;
+}
+
 template <GLenum... TYPES>
 inline garie::Program link_shader_program(const garie::Shader<TYPES>&... shaders,
                                    std::string* log_ptr) {
@@ -69,6 +106,18 @@ garie::FragmentShader compile_fragment_shader_from_file(const char* path, std::s
 
 garie::ComputeShader compile_compute_shader_from_file(const char* path, std::string* log_ptr) {
   return compile_shader_from_file<GL_COMPUTE_SHADER>(path, log_ptr);
+}
+
+garie::VertexShader load_vertex_shader_from_file(const char* path, std::string* log_ptr) {
+  return load_shader_from_file<GL_VERTEX_SHADER>(path, log_ptr);
+}
+
+garie::FragmentShader load_fragment_shader_from_file(const char* path, std::string* log_ptr) {
+  return load_shader_from_file<GL_FRAGMENT_SHADER>(path, log_ptr);
+}
+
+garie::ComputeShader load_compute_shader_from_file(const char* path, std::string* log_ptr) {
+  return load_shader_from_file<GL_COMPUTE_SHADER>(path, log_ptr);
 }
 
 garie::Program link_program(const garie::VertexShader& vert, const garie::FragmentShader& frag, std::string* log_ptr) {

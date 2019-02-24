@@ -35,31 +35,34 @@ bool DeferredShading::restore() {
   if (!p1_prog) return false;
 
   // リソースを生成する
+  const GLuint width = Application::get().screen_width();
+  const GLuint height = Application::get().screen_height();
+
   garie::Texture ds_tex;
   ds_tex.gen();
   ds_tex.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, 1280, 720);
+  glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, width, height);
 
   const GLenum format = GL_RGBA8;
   garie::Texture g0_tex;
   g0_tex.gen();
   g0_tex.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, format, 1280, 720);
+  glTexStorage2D(GL_TEXTURE_2D, 1, format, width, height);
 
   garie::Texture g1_tex;
   g1_tex.gen();
   g1_tex.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, format, 1280, 720);
+  glTexStorage2D(GL_TEXTURE_2D, 1, format, width, height);
 
   garie::Texture g2_tex;
   g2_tex.gen();
   g2_tex.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, format, 1280, 720);
+  glTexStorage2D(GL_TEXTURE_2D, 1, format, width, height);
 
   garie::Texture g3_tex;
   g3_tex.gen();
   g3_tex.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, format, 1280, 720);
+  glTexStorage2D(GL_TEXTURE_2D, 1, format, width, height);
 
   garie::Framebuffer fbo = garie::FramebufferBuilder()
                                  .depthstencil_texture(ds_tex)
@@ -69,16 +72,12 @@ bool DeferredShading::restore() {
                                  .color_texture(3, g3_tex)
                                  .build();
 
+  garie::Viewport viewport(0.f, 0.f, static_cast<float>(width), static_cast<float>(height));
+
   garie::Sampler ss = garie::SamplerBuilder()
         .min_filter(GL_NEAREST)
         .mag_filter(GL_NEAREST)
         .build();
-
-  if (!util::screen_quad_vao()) {
-    log_ = "スクリーンクアッドのジオメトリの初期化に失敗した";
-    RT_LOG(error, "スクリーンクアッドのジオメトリの初期化に失敗した");
-    return false;
-  }
 
   // 後始末
   p0_prog_ = std::move(p0_prog);
@@ -89,6 +88,7 @@ bool DeferredShading::restore() {
   g2_tex_ = std::move(g2_tex);
   g3_tex_ = std::move(g3_tex);
   fbo_ = std::move(fbo);
+  viewport_ = std::move(viewport);
   ss_ = std::move(ss);
   //debug_view_ = DebugView::DEFAULT;
   log_ = "成功";
@@ -119,65 +119,64 @@ void DeferredShading::update_gui() {
 }
 
 void DeferredShading::apply(Scene& scene) {
-  // FBOをバインドする
-  fbo_.bind(GL_DRAW_FRAMEBUFFER);
+  // パス0
+  {
+    // FBOをバインドする
+    fbo_.bind(GL_DRAW_FRAMEBUFFER);
+    viewport_.apply();
 
-  glViewport(0, 0, 1280, 720);
-  glScissor(0, 0, 1280, 720);
+    // レンダターゲットをクリアする
+    util::clear({0.f, 0.f, 0.f, 0.f}, 1.f, 0);
 
-  // レンダターゲットをクリアする
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  glDepthMask(GL_TRUE);
-  glStencilMask(GL_TRUE);
-  glClearColor(0.f, 0.f, 0.f, 0.f);
-  glClearDepthf(1.f);
-  glClearStencil(0);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    // パイプラインをバインドする
+    p0_prog_.use();
+    util::default_rs().apply();
+    util::default_bs().apply();
+    util::depth_test_dss().apply();
 
-  // ジオメトリパスをバインドする
-  p0_prog_.use();
-  util::default_rs().apply();
-  util::default_bs().apply();
-  util::depth_test_dss().apply();
+    // シーンを描画する
+    scene.apply(ApplyType::SHADE);
+    scene.draw(DrawType::OPAQUE);
+  }
 
-  // シーンを描画する
-  scene.apply(scene::ApplyType::SHADE);
-  scene.draw(scene::DrawType::OPAQUE);
+  // パス1
+  {
+    // MRTを解除する
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    util::screen_viewport().apply();
 
-  // MRTを解除する
-  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    // バックバッファをクリアする
+    util::clear({0.f, 0.f, 0.f, 0.f}, 1.f);
 
-  // バックバッファをクリアする
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  glDepthMask(GL_TRUE);
-  glClearColor(0.f, 0.f, 0.f, 0.f);
-  glClearDepthf(1.f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // ライティングパスをバインドする
+    p1_prog_.use();
+    util::default_rs().apply();
+    util::additive_bs().apply();
+    util::default_dss().apply();
 
-  // ライティングパスをバインドする
-  p1_prog_.use();
-  glUniform1i(11, static_cast<int>(debug_view_));
-  ds_tex_.active(0, GL_TEXTURE_2D);
-  ss_.bind(0);
-  g0_tex_.active(1, GL_TEXTURE_2D);
-  ss_.bind(1);
-  g1_tex_.active(2, GL_TEXTURE_2D);
-  ss_.bind(2);
-  g2_tex_.active(3, GL_TEXTURE_2D);
-  ss_.bind(3);
-  g3_tex_.active(4, GL_TEXTURE_2D);
-  ss_.bind(4);
-  util::default_rs().apply();
-  util::additive_bs().apply();
-  util::default_dss().apply();
+    // リソースをバインドする
+    ds_tex_.active(8, GL_TEXTURE_2D);
+    ss_.bind(8);
+    g0_tex_.active(9, GL_TEXTURE_2D);
+    ss_.bind(9);
+    g1_tex_.active(10, GL_TEXTURE_2D);
+    ss_.bind(10);
+    g2_tex_.active(11, GL_TEXTURE_2D);
+    ss_.bind(11);
+    g3_tex_.active(12, GL_TEXTURE_2D);
+    ss_.bind(12);
 
-  // ライトボリュームを描画する
-  if (debug_view_ == DebugView::DEFAULT) {
+    // 定数をアップロードする
+    glUniform1i(32, static_cast<int>(debug_view_));
+
+    // ライトボリュームを描画する
+    if (debug_view_ == DebugView::DEFAULT) {
       scene.apply(ApplyType::LIGHT);
       scene.draw(DrawType::LIGHT_VOLUME);
-  } else {
-    util::screen_quad_vao().bind();
-    util::draw_screen_quad();
+    } else {
+      util::screen_quad_vao().bind();
+      util::draw_screen_quad();
+    }
   }
 }
 }  // namespace rtrdemo::tech

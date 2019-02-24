@@ -9,28 +9,30 @@ struct Camera {
     mat4 proj_inv;
     vec3 position_w;
 };
+layout(binding = 0) uniform CameraUniform {
+    Camera CAMERA;
+};
+
 struct PointLight {
     vec3 position_w;
     float radius;
     vec3 color;
     float intensity;
 };
-
-layout(binding = 0) uniform CameraUniform {
-    Camera CAMERA;
-};
-
 layout(binding = 0) buffer LightBuffer {
     PointLight LIGHTS[];
 };
 
+// 定数
+layout(location = 0) uniform int DRAW_ID;
+
+// 入力
 layout(location = 0) in vec2 position;
 
+// 出力
 out VertexData {
     layout(location = 0) vec3 position_c;
 } OUT;
-
-layout(location = 10) uniform int DRAW_ID;
 
 void main() {
     PointLight LIGHT = LIGHTS[DRAW_ID];

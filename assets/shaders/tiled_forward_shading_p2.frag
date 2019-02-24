@@ -39,10 +39,10 @@ layout(binding = 2) buffer LightBuffer {
     PointLight LIGHTS[];
 };
 
-layout(binding = 10) buffer LightGridBuffer {
+layout(binding = 8) buffer LightGridBuffer {
     GridCell GRID_CELLS[];
 };
-layout(binding = 11) buffer LightIndexBuffer {
+layout(binding = 9) buffer LightIndexBuffer {
     uint LIGHT_INDEX_COUNT;
     uint LIGHT_INDICES[];
 };
@@ -52,8 +52,8 @@ in VertexData {
     layout(location = 1) vec3 normal_w;
     layout(location = 2) vec2 position_s;
 } IN;
-layout(location = 10) uniform uint DRAW_ID;
-layout(location = 11) uniform uint DEBUG_VIEW;
+layout(location = 0) uniform uint DRAW_ID;
+layout(location = 32) uniform uint DEBUG_VIEW;
 layout(location = 0) out vec4 frag_color;
 void main() {
     Material MATERIAL = MATERIALS[RESOURCE_INDICES[DRAW_ID]];

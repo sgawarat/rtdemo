@@ -1,5 +1,6 @@
 #version 450
 
+// カメラ
 struct Camera {
     mat4 view_proj;
     mat4 view;
@@ -9,30 +10,35 @@ struct Camera {
     mat4 proj_inv;
     vec3 position_w;
 };
+layout(binding = 0) uniform CameraUniform {
+    Camera CAMERA;
+};
+
+// リソース番号
+layout(binding = 0) buffer ResourceIndexBuffer {
+    uint RESOURCE_INDICES[];
+};
+
+// マテリアル
 struct Material {
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
     float specular_power;
 };
-
-layout(location = 10) uniform uint DRAW_ID; // HACK
-
-layout(binding = 0) uniform CameraUniform {
-    Camera CAMERA;
-};
-
-layout(binding = 0) buffer ResourceIndexBuffer {
-    uint RESOURCE_INDICES[];
-};
 layout(binding = 1) buffer MaterialBuffer {
     Material MATERIALS[];
 };
 
+// 定数
+layout(location = 0) uniform uint DRAW_ID;
+
+// 入力
 in VertexData {
     layout(location = 0) vec3 normal_w;
 } IN;
 
+// 出力
 layout(location = 0) out vec4 frag_color0;
 layout(location = 1) out vec4 frag_color1;
 layout(location = 2) out vec4 frag_color2;

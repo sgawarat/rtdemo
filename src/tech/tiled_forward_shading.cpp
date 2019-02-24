@@ -49,19 +49,21 @@ bool TiledForwardShading::restore() {
   if (!p3_prog) return false;
 
 
-  const size_t grid_width = (1280 + 31) / 32;
-  const size_t grid_height = (720 + 31) / 32;
+  const GLuint width = Application::get().screen_width();
+  const GLuint height = Application::get().screen_height();
+  const size_t grid_width = (width + 31) / 32;
+  const size_t grid_height = (height + 31) / 32;
 
   // リソースを生成する
   garie::Texture depth_tex;
   depth_tex.gen();
   depth_tex.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, 1280, 720);
+  glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, width, height);
 
   garie::Texture rt0_tex;
   rt0_tex.gen();
   rt0_tex.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, 1280, 720);
+  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
 
   garie::Framebuffer p0_fbo = garie::FramebufferBuilder()
       .depth_texture(depth_tex)
@@ -72,6 +74,8 @@ bool TiledForwardShading::restore() {
       .color_texture(0, rt0_tex)
       .build();
 
+  garie::Viewport viewport(0.f, 0.f, static_cast<float>(width), static_cast<float>(height));
+
   garie::Buffer light_grid_ssbo;
   light_grid_ssbo.gen();
   light_grid_ssbo.bind(GL_SHADER_STORAGE_BUFFER);
@@ -80,7 +84,7 @@ bool TiledForwardShading::restore() {
   garie::Buffer light_index_ssbo;
   light_index_ssbo.gen();
   light_index_ssbo.bind(GL_SHADER_STORAGE_BUFFER);
-  glBufferStorage(GL_SHADER_STORAGE_BUFFER, (200 * grid_width * grid_height + 1) * sizeof(uint32_t), nullptr, 0);
+  glBufferStorage(GL_SHADER_STORAGE_BUFFER, (MAX_LIGHT_COUNT * grid_width * grid_height + 1) * sizeof(uint32_t), nullptr, 0);
 
   // 後始末
   p0_prog_ = std::move(p0_prog);
@@ -91,8 +95,11 @@ bool TiledForwardShading::restore() {
   rt0_tex_ = std::move(rt0_tex);
   p0_fbo_ = std::move(p0_fbo);
   p2_fbo_ = std::move(p2_fbo);
+  viewport_ = std::move(viewport);
   light_grid_ssbo_ = std::move(light_grid_ssbo);
   light_index_ssbo_ = std::move(light_index_ssbo);
+  grid_width_ = grid_width;
+  grid_height_ = grid_height;
   log_ = "成功";
   return true;
 }
@@ -118,7 +125,6 @@ void TiledForwardShading::update_gui() {
   ImGui::Begin("TiledForwardShading");
   ImGui::Combo("debug view", reinterpret_cast<int*>(&debug_view_), "Default\0Position\0Normal\0Ambient\0Diffuse\0Specular\0SpecularPower\0TileIndex\0TileLightCount\0");
   ImGui::TextWrapped("%s", log_.c_str());
-  ImGui::TextWrapped("grid = (%d, %d)", cell_.first, cell_.count);
   ImGui::End();
 }
 
@@ -127,38 +133,36 @@ void TiledForwardShading::apply(Scene& scene) {
   {
     // 深度バッファのみのFBOをバインドする
     p0_fbo_.bind(GL_DRAW_FRAMEBUFFER);
-
-    glViewport(0, 0, 1280, 720);
-    glScissor(0, 0, 1280, 720);
+    viewport_.apply();
 
     // 深度バッファをクリアする
-    glDepthMask(GL_TRUE);
-    glClearDepthf(1.f);
-    glClear(GL_DEPTH_BUFFER_BIT);
+    util::clear(1.f);
 
-    // バインド
+    // パイプラインをバインドする
     p0_prog_.use();
     util::default_rs().apply();
     util::default_bs().apply();
     util::depth_test_dss().apply();
 
     // シーンを描画する
-    scene.apply(scene::ApplyType::NO_SHADE);
-    scene.draw(scene::DrawType::OPAQUE);
+    scene.apply(ApplyType::NO_SHADE);
+    scene.draw(DrawType::OPAQUE);
   }
 
   // パス1:ライト割り当て
   {
-    // バインド
+    // パイプラインをバインドする
     p1_prog_.use();
+
+    // リソースをバインドする
     depth_tex_.active(0, GL_TEXTURE_2D);
-    light_grid_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 20);
-    light_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 21);
+    light_grid_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 8);
+    light_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 9);
 
     // ディスパッチ
-    scene.apply(scene::ApplyType::LIGHT);
-    glDispatchCompute(40, 23, 1);
-    //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    scene.apply(ApplyType::LIGHT);
+    glDispatchCompute(static_cast<GLuint>(grid_width_), static_cast<GLuint>(grid_height_), 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
   }
 
   // パス2:シェーディング
@@ -167,42 +171,43 @@ void TiledForwardShading::apply(Scene& scene) {
     p2_fbo_.bind(GL_DRAW_FRAMEBUFFER);
 
     // レンダターゲットをクリアする
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glClearColor(0.f, 0.f, 0.f, 0.f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    util::clear({0.f, 0.f, 0.f, 0.f});
 
     // パイプラインをバインドする
     p2_prog_.use();
-    glUniform1ui(11, static_cast<int>(debug_view_));  
-    light_grid_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 10);
-    light_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 11);
     util::default_rs().apply();
     util::alpha_blending_bs().apply();
     util::depth_test_no_write_dss().apply();
 
+    // リソースをバインドする
+    light_grid_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 8);
+    light_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 9);
+
+    // 定数をアップロードする
+    glUniform1ui(32, static_cast<int>(debug_view_));  
+
     // シーンを描画する
-    scene.apply(scene::ApplyType::SHADE);
-    scene.draw(scene::DrawType::OPAQUE);
+    scene.apply(ApplyType::SHADE);
+    scene.draw(DrawType::OPAQUE);
   }
 
   // パス3:ポストプロセッシング
   {
     // バックバッファをフレームバッファにバインドする
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    util::screen_viewport().apply();
 
     // バックバッファをクリアする
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDepthMask(GL_TRUE);
-    glClearColor(0.f, 0.f, 0.f, 0.f);
-    glClearDepthf(1.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    util::clear({0.f, 0.f, 0.f, 0.f}, 1.f);
 
-    // バインド
+    // パイプラインをバインドする
     p3_prog_.use();
-    rt0_tex_.active(0, GL_TEXTURE_2D);
     util::default_rs().apply();
     util::default_bs().apply();
     util::default_dss().apply();
+
+    // リソースをバインドする
+    rt0_tex_.active(8, GL_TEXTURE_2D);
 
     // 描画する
     util::screen_quad_vao().bind();

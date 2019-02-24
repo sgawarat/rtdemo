@@ -290,7 +290,7 @@ void StaticScene::draw(DrawType type) {
         case DrawMode::DRAW: {
           for (size_t i = 0; i < commands_.size(); ++i) {
             const auto& command = commands_[i];
-            glUniform1ui(10, static_cast<GLuint>(i));
+            glUniform1ui(0, static_cast<GLuint>(i));
             glDrawElementsInstancedBaseVertexBaseInstance(
                 GL_TRIANGLES, command.index_count, GL_UNSIGNED_SHORT,
                 (const GLvoid*)(command.index_first * sizeof(uint16_t)),
@@ -302,7 +302,7 @@ void StaticScene::draw(DrawType type) {
           dio_.bind(GL_DRAW_INDIRECT_BUFFER);
           for (size_t i = 0; i < commands_.size(); ++i) {
             const auto& command = commands_[i];
-            glUniform1ui(10, static_cast<GLuint>(i));
+            glUniform1ui(0, static_cast<GLuint>(i));
             glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_SHORT,
                                   (const void*)(i * sizeof(Command)));
           }
@@ -319,8 +319,8 @@ void StaticScene::draw(DrawType type) {
     case DrawType::LIGHT_VOLUME: {
       util::screen_quad_vao().bind();
       for (size_t i = 0; i < light_count_; ++i) {
-        glUniform1ui(10, static_cast<GLuint>(i));
-        util::draw_light_quad();
+        glUniform1ui(0, static_cast<GLuint>(i));
+        util::draw_screen_quad();
       }
       break;
     }

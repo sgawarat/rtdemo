@@ -35,6 +35,37 @@ garie::ComputeShader compile_compute_shader_from_file(
     const char* path, std::string* log_ptr = nullptr);
 
 /**
+ * @brief ファイルから頂点シェーダをロードする
+ * 
+ * @param path ファイルパス
+ * @param log_ptr ログを書き出す先へのポインタ
+ * @return garie::VertexShader 生成したシェーダオブジェクト
+ */
+garie::VertexShader load_vertex_shader_from_file(
+    const char* path, std::string* log_ptr = nullptr);
+
+/**
+ * @brief ファイルからフラグメントシェーダをロードする
+ * 
+ * @param path ファイルパス
+ * @param log_ptr ログを書き出す先へのポインタ
+ * @return garie::VertexShader 生成したシェーダオブジェクト
+ */
+garie::FragmentShader load_fragment_shader_from_file(
+    const char* path, std::string* log_ptr = nullptr);
+
+/**
+ * @brief ファイルからコンピュートシェーダをロードする
+ * 
+ * @param path ファイルパス
+ * @param log_ptr ログを書き出す先へのポインタ
+ * @return garie::VertexShader 生成したシェーダオブジェクト
+ */
+garie::ComputeShader load_compute_shader_from_file(
+    const char* path, std::string* log_ptr = nullptr);
+
+
+/**
  * @brief プログラムをリンクする
  * 
  * @param vert 頂点シェーダ

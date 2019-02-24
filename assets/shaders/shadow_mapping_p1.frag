@@ -9,50 +9,53 @@ struct Camera {
     mat4 proj_inv;
     vec3 position_w;
 };
+layout(binding = 0) uniform CameraUniform {
+    Camera CAMERA;
+};
+
+layout(binding = 0) buffer ResourceIndexBuffer {
+    uint RESOURCE_INDICES[];
+};
+
 struct Material {
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
     float specular_power;
 };
+layout(binding = 1) buffer MaterialBuffer {
+    Material MATERIALS[];
+};
+
 struct PointLight {
     vec3 position_w;
     float radius;
     vec3 color;
     float intensity;
 };
-struct ShadowCaster {
-    mat4 view_proj;
-};
-
-layout(binding = 0) uniform CameraUniform {
-    Camera CAMERA;
-};
-layout(binding = 0) buffer ResourceIndexBuffer {
-    uint RESOURCE_INDICES[];
-};
-layout(binding = 1) buffer MaterialBuffer {
-    Material MATERIALS[];
-};
 layout(binding = 2) buffer LightBuffer {
     PointLight LIGHTS[];
+};
+
+struct ShadowCaster {
+    mat4 view_proj;
 };
 layout(binding = 3) buffer ShadowCasterBuffer {
     ShadowCaster SHADOW_CASTERS[];
 };
 
-layout(binding = 0) uniform sampler2D DEPTH;
+layout(binding = 8) uniform sampler2D DEPTH;
 
 in VertexData {
     layout(location = 0) vec3 position_w;
     layout(location = 1) vec3 normal_w;
 } IN;
 
-layout(location = 10) uniform uint DRAW_ID;
-layout(location = 11) uniform uint DEBUG_VIEW;
-layout(location = 12) uniform float SHADOW_BIAS;
-
 layout(location = 0) out vec4 frag_color;
+
+layout(location = 0) uniform uint DRAW_ID;
+layout(location = 32) uniform uint DEBUG_VIEW;
+layout(location = 33) uniform float SHADOW_BIAS;
 
 void main() {
     Material MATERIAL = MATERIALS[RESOURCE_INDICES[DRAW_ID]];

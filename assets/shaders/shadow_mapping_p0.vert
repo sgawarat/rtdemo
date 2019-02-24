@@ -3,7 +3,6 @@
 struct ShadowCaster {
     mat4 view_proj;
 };
-
 layout(binding = 0) buffer ShadowCasterBuffer {
     ShadowCaster SHADOW_CASTERS[];
 };

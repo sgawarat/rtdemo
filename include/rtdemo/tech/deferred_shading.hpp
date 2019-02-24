@@ -47,6 +47,7 @@ class DeferredShading final : public Technique {
   garie::Texture g2_tex_;
   garie::Texture g3_tex_;
   garie::Framebuffer fbo_;
+  garie::Viewport viewport_;
   garie::Sampler ss_;
   DebugView debug_view_ = DebugView::DEFAULT;
   std::string log_;  // シェーダのエラーログ

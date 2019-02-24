@@ -47,10 +47,19 @@ class Object {
 
   /**
    * @brief 生成する
-   * 
    */
   void gen() noexcept {
     id_ = Derived::gen_impl();
+  }
+
+  /**
+   * @brief 破棄する
+   */
+  void del() noexcept {
+    if (id_) {
+      Derived::delete_impl(id_);
+      id_ = 0;
+    }
   }
 
   /**
@@ -85,6 +94,24 @@ class Shader : public Object<Shader<TYPE>> {
   bool compile(const GLchar* string, GLint length = -1) const noexcept {
     glShaderSource(this->id(), 1, &string, &length);
     glCompileShader(this->id());
+
+    GLint status = GL_FALSE;
+    glGetShaderiv(this->id(), GL_COMPILE_STATUS, &status);
+    return status == GL_TRUE;
+  }
+
+  /**
+   * @brief SPIR-Vバイナリをロードする
+   * 
+   * @param binary バイナリへのポインタ
+   * @param length binaryのサイズ
+   * @return true 成功した
+   * @return false 失敗した
+   */
+  bool load(const void* binary, GLsizei length) const noexcept {
+    GLuint id = this->id();
+    glShaderBinary(1, &id, GL_SHADER_BINARY_FORMAT_SPIR_V, binary, length);
+    glSpecializeShader(this->id(), "main", 0, nullptr, nullptr);
 
     GLint status = GL_FALSE;
     glGetShaderiv(this->id(), GL_COMPILE_STATUS, &status);
@@ -955,5 +982,55 @@ class DepthStencilStateBuilder final {
 
  private:
   DepthStencilState state_;
+};
+
+class Viewport {
+public:
+  Viewport() = default;
+
+  Viewport(float x, float y, float w, float h) noexcept
+    : v{x, y, w, h} {}
+
+  Viewport(std::array<float, 4> v) noexcept
+    : v(v) {}
+
+  void apply(GLuint index = 0) const noexcept {
+    glViewportIndexedfv(index, v.data());
+  }
+
+  union {
+    struct {
+      float x;
+      float y;
+      float width;
+      float height;
+    };
+    std::array<float, 4> v;
+  };
+};
+
+class Scissor {
+public:
+  Scissor() = default;
+
+  Scissor(GLint l, GLint b, GLint w, GLint h) noexcept
+    : v{l, b, w, h} {}
+
+  Scissor(std::array<GLint, 4> v) noexcept
+    : v(v) {}
+
+  void apply(GLuint index = 0) const noexcept {
+    glScissorIndexedv(index, v.data());
+  }
+
+  union {
+    struct {
+      GLint left;
+      GLint bottom;
+      GLint width;
+      GLint height;
+    };
+    std::array<GLint, 4> v;
+  };
 };
 }  // namespace garie

@@ -39,6 +39,7 @@ class ShadowMapping final : public Technique {
   garie::Program p1_prog_;  ///< シェーディングパスのプログラム
   garie::Texture depth_tex_;  ///< シャドウマップのテクスチャ
   garie::Framebuffer p0_fbo_;  ///< シャドウパスのフレームバッファ
+  garie::Viewport p0_viewport_;  ///< シャドウパスのビューポート
   garie::Sampler ss_;  ///< サンプラ
   DebugView debug_view_ = DebugView::DEFAULT;
   float shadow_bias_ = 0.05f;

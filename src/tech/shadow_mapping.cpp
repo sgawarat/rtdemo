@@ -31,13 +31,17 @@ bool ShadowMapping::restore() {
   if (!p1_prog) return false;
 
   // リソースを生成する
+  const GLuint width = 1024;
+  const GLuint height = 1024;
   garie::Texture depth_tex;
   depth_tex.gen();
   depth_tex.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT16, 1024, 1024);
+  glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT16, width, height);
 
   garie::Framebuffer p0_fbo =
       garie::FramebufferBuilder().depth_texture(depth_tex).build();
+
+  garie::Viewport p0_viewport(0.f, 0.f, width, height);
 
   const float border_color[4] = {1.f, 1.f, 1.f, 1.f};
   garie::Sampler ss = garie::SamplerBuilder()
@@ -53,6 +57,7 @@ bool ShadowMapping::restore() {
   p1_prog_ = std::move(p1_prog);
   depth_tex_ = std::move(depth_tex);
   p0_fbo_ = std::move(p0_fbo);
+  p0_viewport_ = std::move(p0_viewport);
   ss_ = std::move(ss);
   log_ = "成功";
   return true;
@@ -84,16 +89,12 @@ void ShadowMapping::apply(Scene& scene) {
   {
     // 深度バッファのみのFBOをバインドする
     p0_fbo_.bind(GL_DRAW_FRAMEBUFFER);
-
-    glViewport(0, 0, 1024, 1024);
-    glScissor(0, 0, 1024, 1024);
+    p0_viewport_.apply();
 
     // 深度バッファをクリアする
-    glDepthMask(GL_TRUE);
-    glClearDepthf(1.f);
-    glClear(GL_DEPTH_BUFFER_BIT);
+    util::clear(1.f);
 
-    //  ステートをバインドする
+    //  パイプラインをバインドする
     p0_prog_.use();
     util::default_rs().apply();
     util::default_bs().apply();
@@ -108,28 +109,24 @@ void ShadowMapping::apply(Scene& scene) {
   {
     // バックバッファをターゲットにする
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-    glViewport(0, 0, 1280, 720);
-    glScissor(0, 0, 1280, 720);
+    util::screen_viewport().apply();
 
     // バックバッファをクリアする
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDepthMask(GL_TRUE);
-    glClearColor(0.f, 0.f, 0.f, 0.f);
-    glClearDepthf(1.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    util::clear({0.f, 0.f, 0.f, 0.f}, 1.f);
 
-    // ステートをバインドする
+    // パイプラインをバインドする
     p1_prog_.use();
-    depth_tex_.active(0, GL_TEXTURE_2D);
-    ss_.bind(0);
     util::default_rs().apply();
     util::alpha_blending_bs().apply();
     util::depth_test_dss().apply();
 
+    // リソースをバインドする
+    depth_tex_.active(8, GL_TEXTURE_2D);
+    ss_.bind(8);
+
     // 定数を更新する
-    glUniform1ui(11, static_cast<int>(debug_view_));
-    glUniform1f(12, shadow_bias_ * 0.01f);
+    glUniform1ui(32, static_cast<int>(debug_view_));
+    glUniform1f(33, shadow_bias_ * 0.01f);
 
     // シーンを描画する
     scene.apply(ApplyType::SHADE);

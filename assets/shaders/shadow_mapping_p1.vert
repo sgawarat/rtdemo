@@ -23,12 +23,12 @@ layout(binding = 3) buffer ShadowCasterBuffer {
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 
-layout(location = 11) uniform uint DEBUG_VIEW;
-
 out VertexData {
     layout(location = 0) vec3 position_w;
     layout(location = 1) vec3 normal_w;
 } OUT;
+
+layout(location = 32) uniform uint DEBUG_VIEW;
 
 void main() {
     vec4 position_c;
