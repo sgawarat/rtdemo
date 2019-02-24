@@ -1,15 +1,10 @@
 #include <rtdemo/tech/tiled_forward_shading.hpp>
-#include <fstream>
-#include <vector>
 #include <imgui.h>
 #include <rtdemo/logging.hpp>
-#include <rtdemo/managed.hpp>
 #include <rtdemo/util.hpp>
 
 namespace rtdemo::tech {
-namespace {
-RT_MANAGED_TECHNIQUE_INSTANCE(tech, TiledForwardShading);
-}  // namespace
+RT_MANAGED_TECHNIQUE(TiledForwardShading);
 
 bool TiledForwardShading::restore() {
   // シェーダを生成する
@@ -127,7 +122,7 @@ void TiledForwardShading::update_gui() {
   ImGui::End();
 }
 
-void TiledForwardShading::apply(scene::Scene& scene) {
+void TiledForwardShading::apply(Scene& scene) {
   // パス0:Pre-Z
   {
     // 深度バッファのみのFBOをバインドする

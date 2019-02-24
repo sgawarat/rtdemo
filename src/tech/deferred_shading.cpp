@@ -1,15 +1,10 @@
 #include <rtdemo/tech/deferred_shading.hpp>
-#include <fstream>
-#include <vector>
 #include <imgui.h>
 #include <rtdemo/logging.hpp>
-#include <rtdemo/managed.hpp>
 #include <rtdemo/util.hpp>
 
 namespace rtdemo::tech {
-namespace {
-RT_MANAGED_TECHNIQUE_INSTANCE(tech, DeferredShading);
-}  // namespace
+RT_MANAGED_TECHNIQUE(DeferredShading);
 
 bool DeferredShading::restore() {
   // シェーダを生成する
@@ -123,7 +118,7 @@ void DeferredShading::update_gui() {
   ImGui::End();
 }
 
-void DeferredShading::apply(scene::Scene& scene) {
+void DeferredShading::apply(Scene& scene) {
   // FBOをバインドする
   fbo_.bind(GL_DRAW_FRAMEBUFFER);
 
@@ -178,8 +173,8 @@ void DeferredShading::apply(scene::Scene& scene) {
 
   // ライトボリュームを描画する
   if (debug_view_ == DebugView::DEFAULT) {
-    scene.apply(scene::ApplyType::LIGHT);
-    scene.draw(scene::DrawType::LIGHT_VOLUME);
+      scene.apply(ApplyType::LIGHT);
+      scene.draw(DrawType::LIGHT_VOLUME);
   } else {
     util::screen_quad_vao().bind();
     util::draw_screen_quad();

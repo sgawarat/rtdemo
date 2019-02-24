@@ -2,20 +2,31 @@
 #ifdef WIN32
 #include <Windows.h>
 #endif
-#include <iostream>
+#include <gsl/gsl>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 #include <imgui.h>
 #include <rtdemo/logging.hpp>
 
-namespace rtdemo::gui {
+namespace rtdemo {
 namespace {
-constexpr size_t INDICES_SIZE = 6 * 1024 * sizeof(ImDrawIdx);  // インデックスバッファのサイズ
-constexpr size_t VERTICES_SIZE = 4 * 1024 * sizeof(ImDrawVert);  // 頂点バッファのサイズ
+constexpr size_t INDEX_BUFFER_SIZE = 6 * 1024 * sizeof(ImDrawIdx);  // インデックスバッファのサイズ
+constexpr size_t VERTEX_BUFFER_SIZE = 4 * 1024 * sizeof(ImDrawVert);  // 頂点バッファのサイズ
 }  // namespace
 
+Gui& Gui::get() noexcept {
+  static Gui self;
+  return self;
+}
+
 bool Gui::init(GLFWwindow* window) {
+  // 初期化に失敗した場合にterminateを呼ぶようにする
+  bool succeeded = false;
+  auto _ = gsl::finally([&, this] {
+    if (!succeeded) terminate();
+  });
+
   // コンテキストを生成する
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -114,9 +125,8 @@ bool Gui::init(GLFWwindow* window) {
   }
 
   // シェーダプログラムを生成する
-  garie::Program prog;
-  prog.gen();
-  if (!prog.link(vert, frag)) {
+  prog_.gen();
+  if (!prog_.link(vert, frag)) {
     GLchar info_log[1024];
     prog_.get_info_log(1024, info_log);
     RT_ERROR("GUIのシェーダプログラムのリンクに失敗した。(info_log:{})", info_log);
@@ -124,34 +134,31 @@ bool Gui::init(GLFWwindow* window) {
   }
 
   // ステートを生成する
-  auto rs =
+  rs_ =
       garie::RasterizationStateBuilder().cull_mode(GL_NONE).build();
-  auto cbs =
+  cbs_ =
       garie::ColorBlendStateBuilder()
           .enable(0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_FUNC_ADD,
                   GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_FUNC_ADD,
                   {GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE})
           .build();
-  auto dss = garie::DepthStencilStateBuilder().build();
+  dss_ = garie::DepthStencilStateBuilder().build();
 
   // インデックスバッファを生成する
-  garie::Buffer ib;
-  ib.gen();
-  ib.bind(GL_ELEMENT_ARRAY_BUFFER);
-  glBufferStorage(GL_ELEMENT_ARRAY_BUFFER, INDICES_SIZE, nullptr,
+  ib_.gen();
+  ib_.bind(GL_ELEMENT_ARRAY_BUFFER);
+  glBufferStorage(GL_ELEMENT_ARRAY_BUFFER, INDEX_BUFFER_SIZE, nullptr,
                   GL_MAP_WRITE_BIT);
 
   // 頂点バッファを生成する
-  garie::Buffer vb;
-  vb.gen();
-  vb.bind(GL_ARRAY_BUFFER);
-  glBufferStorage(GL_ARRAY_BUFFER, VERTICES_SIZE, nullptr, GL_MAP_WRITE_BIT);
+  vb_.gen();
+  vb_.bind(GL_ARRAY_BUFFER);
+  glBufferStorage(GL_ARRAY_BUFFER, VERTEX_BUFFER_SIZE, nullptr, GL_MAP_WRITE_BIT);
 
   // VAOを生成する
-  auto va =
-      garie::VertexArrayBuilder()
-          .index_buffer(ib)
-          .vertex_buffer(vb)
+  va_ = garie::VertexArrayBuilder()
+          .index_buffer(ib_)
+          .vertex_buffer(vb_)
           .attribute(0, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert),
                      offsetof(ImDrawVert, pos), 0)
           .attribute(1, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert),
@@ -161,14 +168,14 @@ bool Gui::init(GLFWwindow* window) {
           .build();
 
   // フォントのイメージを格納するテクスチャを生成する
-  unsigned char* pixels;
-  int width, height;
+  unsigned char* pixels = nullptr;
+  int width = 0;
+  int height = 0;
   io.Fonts->AddFontFromFileTTF("assets/fonts/migu-1m-regular.ttf", 14.f,
                                nullptr, io.Fonts->GetGlyphRangesJapanese());
   io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
-  garie::Texture font_tex;
-  font_tex.gen();
-  font_tex.bind(GL_TEXTURE_2D);
+  font_tex_.gen();
+  font_tex_.bind(GL_TEXTURE_2D);
   glTexStorage2D(GL_TEXTURE_2D, 1, GL_R8, width, height);
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED,
                   GL_UNSIGNED_BYTE, pixels);
@@ -177,34 +184,26 @@ bool Gui::init(GLFWwindow* window) {
   io.Fonts->ClearTexData();
 
   // サンプラを生成する
-  garie::Sampler font_ss = garie::SamplerBuilder()
+  font_ss_ = garie::SamplerBuilder()
                                .min_filter(GL_NEAREST)
                                .mag_filter(GL_NEAREST)
                                .build();
 
   // 後始末
   window_ = window;
-  prog_ = std::move(prog);
-  rs_ = std::move(rs);
-  cbs_ = std::move(cbs);
-  dss_ = std::move(dss);
-  va_ = std::move(va);
-  ib_ = std::move(ib);
-  vb_ = std::move(vb);
-  font_tex_ = std::move(font_tex);
-  font_ss_ = std::move(font_ss);
 
+  succeeded = true;
   return true;
 }
 
 void Gui::terminate() {
-  prog_ = garie::Program();
-  va_ = garie::VertexArray();
-  ib_ = garie::Buffer();
-  vb_ = garie::Buffer();
+  prog_.del();
+  va_.del();
+  ib_.del();
+  vb_.del();
   if (font_tex_) {
     ImGui::GetIO().Fonts->TexID = 0;
-    font_tex_ = garie::Texture();
+    font_tex_.del();
   }
   ImGui::DestroyContext();
 }
@@ -213,8 +212,10 @@ void Gui::new_frame() {
   ImGuiIO& io = ImGui::GetIO();
 
   // ディスプレイサイズを設定する
-  int w, h;
-  int display_w, display_h;
+  int w = 0;
+  int h = 0;
+  int display_w = 0;
+  int display_h = 0;
   glfwGetWindowSize(window_, &w, &h);
   glfwGetFramebufferSize(window_, &display_w, &display_h);
   io.DisplaySize = ImVec2((float)w, (float)h);
@@ -258,14 +259,28 @@ void Gui::render() {
 
   ImGuiIO& io = ImGui::GetIO();
 
-  // 
-  int fb_width = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
-  int fb_height = (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y);
+  // ディスプレイで等倍になるようにスケーリングさせる
+  const GLsizei fb_width = static_cast<GLsizei>(io.DisplaySize.x * io.DisplayFramebufferScale.x);
+  const GLsizei fb_height = static_cast<GLsizei>(io.DisplaySize.y * io.DisplayFramebufferScale.y);
   if (fb_width == 0 || fb_height == 0) return;
   draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
+  // パイプラインをバインドする
+  prog_.use();
+  rs_.apply();
+  cbs_.apply();
+  dss_.apply();
+
+  // 動的ステートを設定する
   glEnable(GL_SCISSOR_TEST);
-  glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height);
+  glViewport(0, 0, fb_width, fb_height);
+
+  // リソースをバインドする
+  va_.bind();
+  font_tex_.active(0, GL_TEXTURE_2D);
+  font_ss_.bind(0);
+
+  // スケーリング行列をアップロードする
   const float ortho_projection[16] = {
       2.0f / io.DisplaySize.x,
       0.0f,
@@ -284,34 +299,29 @@ void Gui::render() {
       0.0f,
       1.0f,
   };
-  prog_.use();
   glUniformMatrix4fv(0, 1, GL_FALSE, ortho_projection);
-  rs_.apply();
-  cbs_.apply();
-  dss_.apply();
 
-  va_.bind();
-  font_tex_.active(0, GL_TEXTURE_2D);
-  font_ss_.bind(0);
+  // 描画する
   for (int n = 0; n < draw_data->CmdListsCount; ++n) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
     const ImDrawIdx* idx_buffer_offset = 0;
     
     // インデックスデータを書き込む
+    // TODO:一度のMapですべてのデータをコピーする
     ib_.bind(GL_ELEMENT_ARRAY_BUFFER);
-    ImDrawIdx* ib_data = reinterpret_cast<ImDrawIdx*>(
+    void* ib_data = 
         glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0,
                          cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx),
-                         GL_MAP_WRITE_BIT));
+                         GL_MAP_WRITE_BIT);
     memcpy(ib_data, cmd_list->IdxBuffer.Data,
            cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
     glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 
     // 頂点データを書き込む
     vb_.bind(GL_ARRAY_BUFFER);
-    ImDrawVert* vb_data = reinterpret_cast<ImDrawVert*>(glMapBufferRange(
+    void* vb_data = glMapBufferRange(
         GL_ARRAY_BUFFER, 0, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert),
-        GL_MAP_WRITE_BIT));
+        GL_MAP_WRITE_BIT);
     memcpy(vb_data, cmd_list->VtxBuffer.Data,
            cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
     glUnmapBuffer(GL_ARRAY_BUFFER);
@@ -322,11 +332,11 @@ void Gui::render() {
       if (pcmd->UserCallback) {
         pcmd->UserCallback(cmd_list, pcmd);
       } else {
-        glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w),
-                  (int)(pcmd->ClipRect.z - pcmd->ClipRect.x),
-                  (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
+        glScissor(static_cast<int>(pcmd->ClipRect.x), static_cast<int>(fb_height - pcmd->ClipRect.w),
+                  static_cast<int>(pcmd->ClipRect.z - pcmd->ClipRect.x),
+                  static_cast<int>(pcmd->ClipRect.w - pcmd->ClipRect.y));
         glDrawElements(
-            GL_TRIANGLES, (GLsizei)pcmd->ElemCount,
+            GL_TRIANGLES, static_cast<GLsizei>(pcmd->ElemCount),
             sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
             idx_buffer_offset);
       }
@@ -334,8 +344,7 @@ void Gui::render() {
     }
   }
 
-
-  glViewport(0, 0, 1280, 720);
+  // ステートを戻す
   glDisable(GL_SCISSOR_TEST);
 }
 
@@ -366,7 +375,7 @@ void Gui::on_key(int key, int scancode, int action, int mods) {
 
 void Gui::on_char(unsigned int c) {
   if (c > 0 && c < 0x10000) {
-    ImGui::GetIO().AddInputCharacter((unsigned short)c);
+    ImGui::GetIO().AddInputCharacter(static_cast<unsigned short>(c));
   }
 }
-}  // namespace rtdemo::gui
+}  // namespace rtdemo

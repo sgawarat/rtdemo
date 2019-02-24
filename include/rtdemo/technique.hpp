@@ -1,11 +1,11 @@
 #pragma once
 
-#include <rtdemo/scene/scene.hpp>
+#include "application.hpp"
+#include "scene.hpp"
 
-namespace rtdemo::tech {
+namespace rtdemo {
 /**
  * @brief テクニックのインターフェイス
- * 
  */
 class Technique {
  public:
@@ -29,13 +29,11 @@ class Technique {
 
   /**
    * @brief 状態を更新する
-   * 
    */
   virtual void update() = 0;
 
   /**
    * @brief GUIを更新する
-   * 
    */
   virtual void update_gui() = 0;
 
@@ -44,6 +42,20 @@ class Technique {
    * 
    * @param scene 描画するシーン
    */
-  virtual void apply(scene::Scene& scene) = 0;
+  virtual void apply(Scene& scene) = 0;
 };
-}  // namespace rtdemo::tech
+
+/**
+ * @brief staticなテクニックを定義するマクロ
+ * 
+ * ソースファイルでrtdemo::tech下に記述すると、プログラム起動時にT型のテクニックを登録してくれる。
+ */
+#define RT_MANAGED_TECHNIQUE(T) \
+  namespace { \
+    static struct ManagedTechnique_##T { \
+      ManagedTechnique_##T() { \
+        ::rtdemo::Application::get().insert_technique(#T, std::make_shared<T>()); \
+      } \
+    } managed_technique_##T##_; \
+  }
+}  // namespace rtdemo

@@ -5,14 +5,12 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <imgui.h>
-#include <rtdemo/managed.hpp>
 #include <rtdemo/types.hpp>
 #include <rtdemo/util.hpp>
 
-namespace rtdemo {
-RT_MANAGED_SCENE_INSTANCE(scene, StaticScene);
+namespace rtdemo::scene {
+RT_MANAGED_SCENE(StaticScene);
 
-namespace scene {
 bool StaticScene::restore() {
   // シーンを読み込む
   // const char* scene_path = "assets/scenes/cornellbox/CornellBox-Original.obj";
@@ -319,7 +317,7 @@ void StaticScene::draw(DrawType type) {
       break;
     }
     case DrawType::LIGHT_VOLUME: {
-      util::light_quad_vao().bind();
+      util::screen_quad_vao().bind();
       for (size_t i = 0; i < light_count_; ++i) {
         glUniform1ui(10, static_cast<GLuint>(i));
         util::draw_light_quad();
@@ -328,5 +326,4 @@ void StaticScene::draw(DrawType type) {
     }
   }
 }
-}  // namespace scene
-}  // namespace rtdemo
+}  // namespace rtdemo::scene

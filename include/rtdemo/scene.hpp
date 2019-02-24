@@ -1,6 +1,8 @@
 #pragma once
 
-namespace rtdemo::scene {
+#include "application.hpp"
+
+namespace rtdemo {
 /**
  * @brief バインドするリソースの種類
  */
@@ -8,57 +10,65 @@ enum class ApplyType {
   /**
    * @brief シェーディングあり
    * 
-   * UBO[0] = カメラ
-   * SSBO[0] = リソース番号
-   * SSBO[1] = マテリアル
-   * SSBO[2] = ライト
-   * SSBO[3] = シャドウ
+   * UBO = {
+   *   0: カメラ
+   * }
+   * SSBO = {
+   *   0: リソース番号
+   *   1: マテリアル
+   *   2: ライト
+   *   3: シャドウ
+   * }
    */
   SHADE,
 
   /**
    * @brief シェーディングなし
    * 
-   * UBO[0] = カメラ
+   * UBO = {
+   *   0: カメラ
+   * }
    */
   NO_SHADE,
 
   /**
    * @brief ライト情報のみ
    * 
-   * UBO[0] = カメラ
-   * SSBO[0] = ライト
+   * UBO = {
+   *   0: カメラ
+   * }
+   * SSBO = {
+   *   0: ライト
+   * }
    */
   LIGHT,
 
   /**
    * @brief シャドウ情報のみ
    * 
-   * SSBO[0] = シャドウ
+   * SSBO = {
+   *   0: シャドウ
+   * }
    */
   SHADOW,
 };
 
 /**
  * @brief 描画の種類
- * 
  */
 enum class DrawType {
   /**
    * @brief 不透明オブジェクトを描画する
-   * 
    */
   OPAQUE,
 
   /**
    * @brief 半透明オブジェクトを描画する
-   * 
    */
   TRANSPARENT,
 
   /**
    * @brief ライトボリュームを描画する
-   * 
    */
   LIGHT_VOLUME,
 };
@@ -90,13 +100,11 @@ class Scene {
 
   /**
    * @brief シーンの状態を更新する
-   * 
    */
   virtual void update() = 0;
 
   /**
    * @brief GUIを更新する
-   * 
    */
   virtual void update_gui() = 0;
 
@@ -114,4 +122,18 @@ class Scene {
    */
   virtual void draw(DrawType type) = 0;
 };
-}  // namespace rtdemo::scene
+
+/**
+ * @brief staticなシーンを定義するマクロ
+ * 
+ * ソースファイルでrtdemo::scene下に記述すると、プログラム起動時にT型のシーンを登録してくれる。
+ */
+#define RT_MANAGED_SCENE(T) \
+  namespace { \
+    static struct ManagedScene_##T { \
+      ManagedScene_##T() { \
+        ::rtdemo::Application::get().insert_scene(#T, std::make_shared<T>()); \
+      } \
+    } managed_scene_##T##_; \
+  }
+}  // namespace rtdemo

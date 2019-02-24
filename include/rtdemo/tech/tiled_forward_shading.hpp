@@ -2,12 +2,11 @@
 
 #include <string>
 #include <rtdemo/garie.hpp>
-#include "technique.hpp"
+#include <rtdemo/technique.hpp>
 
 namespace rtdemo::tech {
 /**
  * @brief Tiled Forward Shading
- * 
  */
 class TiledForwardShading final : public Technique {
  public:
@@ -21,12 +20,11 @@ class TiledForwardShading final : public Technique {
 
   void update_gui() override;
 
-  void apply(scene::Scene& scene) override;
+  void apply(Scene& scene) override;
 
 private:
   /**
    * @brief グリッドセル
-   * 
    */
   struct GridCell {
     uint32_t first;
@@ -35,7 +33,6 @@ private:
 
   /**
    * @brief デバッグ表示
-   * 
    */
   enum class DebugView : int {
     DEFAULT,  ///< 通常

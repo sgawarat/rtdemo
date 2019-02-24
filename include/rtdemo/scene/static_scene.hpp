@@ -2,12 +2,11 @@
 
 #include <vector>
 #include <rtdemo/garie.hpp>
-#include "scene.hpp"
+#include <rtdemo/scene.hpp>
 
 namespace rtdemo::scene {
 /**
  * @brief 静的なシーン
- * 
  */
 class StaticScene final : public Scene {
  public:
@@ -28,7 +27,6 @@ class StaticScene final : public Scene {
  private:
   /**
    * @brief 描画モード
-   * 
    */
   enum class DrawMode : int {
     DRAW,  ///< 従来の描画
@@ -37,7 +35,6 @@ class StaticScene final : public Scene {
 
   /**
    * @brief 間接描画コマンド
-   * 
    */
   struct Command {
     GLuint index_count;
@@ -63,7 +60,7 @@ class StaticScene final : public Scene {
   garie::Buffer light_ssbo_;
   garie::Buffer shadow_ssbo_;
   size_t light_count_ = 0;
-  garie::Buffer dio_;
+  garie::Buffer dio_;  ///< indirect描画コマンドのバッファ
   std::vector<Command> commands_;
 };
 }  // namespace rtdemo::scene

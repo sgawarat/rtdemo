@@ -1,15 +1,10 @@
 #include <rtdemo/tech/shadow_mapping.hpp>
-#include <fstream>
-#include <vector>
 #include <imgui.h>
 #include <rtdemo/logging.hpp>
-#include <rtdemo/managed.hpp>
 #include <rtdemo/util.hpp>
 
 namespace rtdemo::tech {
-namespace {
-RT_MANAGED_TECHNIQUE_INSTANCE(tech, ShadowMapping);
-}  // namespace
+RT_MANAGED_TECHNIQUE(ShadowMapping);
 
 bool ShadowMapping::restore() {
   // シェーダを読み込む
@@ -84,7 +79,7 @@ void ShadowMapping::update_gui() {
   ImGui::End();
 }
 
-void ShadowMapping::apply(scene::Scene& scene) {
+void ShadowMapping::apply(Scene& scene) {
   // パス0:シャドウ
   {
     // 深度バッファのみのFBOをバインドする
@@ -105,8 +100,8 @@ void ShadowMapping::apply(scene::Scene& scene) {
     util::depth_test_dss().apply();
 
     // シーンを描画する
-    scene.apply(scene::ApplyType::SHADOW);
-    scene.draw(scene::DrawType::OPAQUE);
+    scene.apply(ApplyType::SHADOW);
+    scene.draw(DrawType::OPAQUE);
   }
 
   // パス1:シェーディング
@@ -137,8 +132,8 @@ void ShadowMapping::apply(scene::Scene& scene) {
     glUniform1f(12, shadow_bias_ * 0.01f);
 
     // シーンを描画する
-    scene.apply(scene::ApplyType::SHADE);
-    scene.draw(scene::DrawType::OPAQUE);
+    scene.apply(ApplyType::SHADE);
+    scene.draw(DrawType::OPAQUE);
   }
 }
 }  // namespace rtdemo::tech

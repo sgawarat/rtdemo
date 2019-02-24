@@ -4,41 +4,45 @@
 #include <Windows.h>
 #endif
 #include <GLFW/glfw3.h>
-#include <imgui.h>
 #include "garie.hpp"
 
-namespace rtdemo::gui {
+namespace rtdemo {
 class Gui final {
  public:
   /**
-  * @brief 初期化する。
+   * @brief インスタンスを取得する
+   * 
+   * @return Gui& 
+   */
+  static Gui& get() noexcept;
+
+  /**
+  * @brief 初期化する
   * 
   * @param window 対象のウィンドウハンドル
-  * @return true 初期化に成功した。
-  * @return false 初期化に失敗した。
+  * @return true 成功した
+  * @return false 失敗した
   */
   bool init(GLFWwindow* window);
 
   /**
-   * @brief 破棄する。
+   * @brief 破棄する
    * 
    */
   void terminate();
 
   /**
-   * @brief 新しいフレームを開始する。
-   * 
+   * @brief 新しいフレームを開始する
    */
   void new_frame();
 
   /**
-   * @brief 描画する。
-   * 
+   * @brief 描画する
    */
   void render();
 
   /**
-   * @brief マウスのボタンが押されたときに呼び出すメソッド
+   * @brief マウスのボタンが押されたときに呼び出すメソッド(GLFW用)
    * 
    * @param button ボタン番号
    * @param action ボタンの状態
@@ -47,7 +51,7 @@ class Gui final {
   void on_mouse_button(int button, int action, int mods);
 
   /**
-   * @brief マウスホイールが回されたときに呼び出すメソッド
+   * @brief マウスホイールが回されたときに呼び出すメソッド(GLFW用)
    * 
    * @param x 横方向の速度
    * @param y 右方向の速度
@@ -55,7 +59,7 @@ class Gui final {
   void on_scroll(double x, double y);
 
   /**
-   * @brief キーが押されたときに呼び出すメソッド
+   * @brief キーが押されたときに呼び出すメソッド(GLFW用)
    * 
    * @param key キーのコード
    * @param scancode スキャンコード
@@ -65,7 +69,7 @@ class Gui final {
   void on_key(int key, int scancode, int action, int mods);
 
   /**
-   * @brief 文字が送られたときに呼び出すメソッド
+   * @brief 文字が送られたときに呼び出すメソッド(GLFW用)
    * 
    * @param c ユニコード文字
    */
@@ -73,8 +77,8 @@ class Gui final {
 
  private:
   GLFWwindow* window_ = nullptr;
-  double time_ = 0.0;
-  bool mouse_pressed_[3] = {};
+  double time_ = 0.0;  ///< 前回のupdateを行った時刻
+  bool mouse_pressed_[3] = {};  ///< マウスのボタンが押されているか
   garie::Program prog_;
   garie::RasterizationState rs_;
   garie::ColorBlendState cbs_;
@@ -85,4 +89,4 @@ class Gui final {
   garie::Texture font_tex_;
   garie::Sampler font_ss_;
 };
-}  // namespace rtdemo::gui
+}  // namespace rtdemo

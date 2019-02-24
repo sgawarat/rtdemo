@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <rtdemo/logging.hpp>
+#include <rtdemo/application.hpp>
 
 namespace rtdemo::util {
 namespace {
@@ -82,7 +83,7 @@ garie::Program link_program(const garie::ComputeShader& comp, std::string* log_p
   return link_shader_program<GL_COMPUTE_SHADER>(comp, log_ptr);
 }
 
-const garie::VertexArray& light_quad_vao() {
+const garie::VertexArray& screen_quad_vao() {
   static garie::VertexArray vao_;
   static garie::Buffer vbo_;
   if (!vao_) {
@@ -110,11 +111,11 @@ const garie::VertexArray& light_quad_vao() {
   return vao_;
 }
 
-void draw_light_quad() {
+void draw_screen_quad() {
   glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-const garie::VertexArray& screen_quad_vao() {
+const garie::VertexArray& screen_triangle_vao() {
   static garie::VertexArray vao_;
   static garie::Buffer vbo_;
   if (!vao_) {
@@ -137,9 +138,7 @@ const garie::VertexArray& screen_quad_vao() {
   return vao_;
 }
 
-void draw_screen_quad() {
-  glEnable(GL_SCISSOR_TEST);
-  glScissor(0, 0, 1280, 720);
+void draw_screen_triangle() {
   glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
@@ -201,5 +200,45 @@ const garie::DepthStencilState& depth_test_no_write_dss() {
           .enable_depth_bounds_test(0.f, 1.f)
           .build();
   return dss;
+}
+
+void clear(std::array<float, 4> color) {
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glClearColor(color[0], color[1], color[2], color[3]);
+  glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void clear(float depth) {
+  glDepthMask(GL_TRUE);
+  glClearDepthf(depth);
+  glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+void clear(std::array<float, 4> color, float depth) {
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDepthMask(GL_TRUE);
+  glClearColor(color[0], color[1], color[2], color[3]);
+  glClearDepthf(depth);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void clear(std::array<float, 4> color, float depth, GLint stencil) {
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDepthMask(GL_TRUE);
+  glStencilMask(GL_TRUE);
+  glClearColor(color[0], color[1], color[2], color[3]);
+  glClearDepthf(depth);
+  glClearStencil(stencil);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+}
+
+garie::Viewport screen_viewport() {
+  auto& app = Application::get();
+  return garie::Viewport(0.f, 0.f, static_cast<float>(app.screen_width()), static_cast<float>(app.screen_height()));
+}
+
+garie::Scissor screen_scissor() {
+  auto& app = Application::get();
+  return garie::Scissor(0, 0, app.screen_width(), app.screen_height());
 }
 }  // namespace rtdemo::util

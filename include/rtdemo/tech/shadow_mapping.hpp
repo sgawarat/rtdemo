@@ -2,7 +2,7 @@
 
 #include <string>
 #include <rtdemo/garie.hpp>
-#include "technique.hpp"
+#include <rtdemo/technique.hpp>
 
 namespace rtdemo::tech {
 /**
@@ -22,7 +22,7 @@ class ShadowMapping final : public Technique {
 
   void update_gui() override;
 
-  void apply(scene::Scene& scene) override;
+  void apply(Scene& scene) override;
 
  private:
   /**

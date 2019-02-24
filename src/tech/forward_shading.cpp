@@ -1,15 +1,10 @@
 #include <rtdemo/tech/forward_shading.hpp>
-#include <fstream>
-#include <vector>
 #include <imgui.h>
 #include <rtdemo/logging.hpp>
-#include <rtdemo/managed.hpp>
 #include <rtdemo/util.hpp>
 
 namespace rtdemo::tech {
-namespace {
-RT_MANAGED_TECHNIQUE_INSTANCE(tech, ForwardShading);
-}  // namespace
+RT_MANAGED_TECHNIQUE(ForwardShading);
 
 bool ForwardShading::restore() {
   // シェーダを読み込む
@@ -46,7 +41,7 @@ void ForwardShading::update_gui() {
   ImGui::End();
 }
 
-void ForwardShading::apply(scene::Scene& scene) {
+void ForwardShading::apply(Scene& scene) {
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
   glViewport(0, 0, 1280, 720);
@@ -64,7 +59,9 @@ void ForwardShading::apply(scene::Scene& scene) {
   util::default_rs().apply();
   util::alpha_blending_bs().apply();
   util::depth_test_dss().apply();
-  scene.apply(scene::ApplyType::SHADE);
-  scene.draw(scene::DrawType::OPAQUE);
+
+  // 定数をアップロードする
+  scene.apply(ApplyType::SHADE);
+  scene.draw(DrawType::OPAQUE);
 }
 }  // namespace rtrdemo::tech

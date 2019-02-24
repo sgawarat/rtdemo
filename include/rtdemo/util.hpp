@@ -67,37 +67,29 @@ garie::Program link_program(const garie::ComputeShader& comp,
                             std::string* log_ptr = nullptr);
 
 /**
- * @brief 光源用のクアッドをバインドしたVAO
- * 
- * @return const garie::VertexArray& VAO
- */
-const garie::VertexArray& light_quad_vao();
-
-/**
- * @brief 光源用のクアッドを描画する
- * 
- */
-void draw_light_quad();
-
-/**
- * @brief スクリーンクアッドをバインドしたVAO
+ * @brief スクリーン全体にまたがる四角形をバインドしたVAOを取得する
  * 
  * @return const garie::VertexArray& VAO
  */
 const garie::VertexArray& screen_quad_vao();
 
 /**
- * @brief スクリーンクアッドをバインドしたVAO
+ * @brief スクリーン全体にまたがる四角形を描画する
  * 
  */
 void draw_screen_quad();
 
 /**
- * @brief ラスタライザを無効化するステート
+ * @brief スクリーン全体にまたがる三角形をバインドしたVAOを取得する
  * 
- * @return const garie::RasterizationState& ステートを返す
+ * @return const garie::VertexArray& VAO
  */
-const garie::RasterizationState& discard_rs();
+const garie::VertexArray& screen_triangle_vao();
+
+/**
+ * @brief スクリーン全体にまたがる三角形を描画する
+ */
+void draw_screen_quad();
 
 /**
  * @brief 既定値のステート
@@ -105,6 +97,13 @@ const garie::RasterizationState& discard_rs();
  * @return const garie::RasterizationState& ステートを返す
  */
 const garie::RasterizationState& default_rs();
+
+/**
+ * @brief ラスタライザを無効化するステート
+ * 
+ * @return const garie::RasterizationState& ステートを返す
+ */
+const garie::RasterizationState& discard_rs();
 
 /**
  * @brief 既定値のステート
@@ -147,4 +146,38 @@ const garie::DepthStencilState& depth_test_dss();
  * @return const garie::DepthStencilState& ステート
  */
 const garie::DepthStencilState& depth_test_no_write_dss();
+
+/**
+ * @brief 色をクリアする
+ */
+void clear(std::array<float, 4> color);
+
+/**
+ * @brief 深度をクリアする
+ */
+void clear(float depth);
+
+/**
+ * @brief 色と深度をクリアする
+ */
+void clear(std::array<float, 4> color, float depth);
+
+/**
+ * @brief 色と深度とステンシルをクリアする
+ */
+void clear(std::array<float, 4> color, float depth, GLint stencil);
+
+/**
+ * @brief スクリーンサイズのビューポートを生成する
+ * 
+ * @return Viewport 
+ */
+garie::Viewport screen_viewport();
+
+/**
+ * @brief スクリーンサイズのScissorを生成する
+ * 
+ * @return Scissor 
+ */
+garie::Scissor screen_scissor();
 }  // namespace rtdemo::util
