@@ -111,7 +111,7 @@ bool Gui::init(GLFWwindow* window) {
         layout(location = 0) out vec4 frag_color;
         void main() {
             float font_color = texture(FONT_TEX, IN.texcoord).r;
-            vec3 final_color = pow(IN.color.rgb, vec3(2.2));
+            vec3 final_color = IN.color.rgb;//pow(IN.color.rgb, vec3(2.2));
             frag_color = vec4(final_color, IN.color.a * font_color);
         }
     )CODE";
