@@ -31,6 +31,11 @@ bool ShadowMapping::restore() {
   if (!p1_prog) return false;
 
   // リソースを生成する
+  garie::Buffer ub;
+  ub.gen();
+  ub.bind(GL_UNIFORM_BUFFER);
+  glBufferStorage(GL_UNIFORM_BUFFER, 1024, nullptr, GL_MAP_WRITE_BIT);
+
   const GLuint width = 1024;
   const GLuint height = 1024;
   garie::Texture depth_tex;
@@ -55,6 +60,7 @@ bool ShadowMapping::restore() {
   // 後始末
   p0_prog_ = std::move(p0_prog);
   p1_prog_ = std::move(p1_prog);
+  ub_ = std::move(ub);
   depth_tex_ = std::move(depth_tex);
   p0_fbo_ = std::move(p0_fbo);
   p0_viewport_ = std::move(p0_viewport);
@@ -67,17 +73,26 @@ bool ShadowMapping::invalidate() {
   ss_ = {};
   p0_fbo_ = {};
   depth_tex_ = {};
+  ub_ = {};
   p0_prog_ = {};
   p1_prog_ = {};
   log_ = "利用不可";
   return true;
 }
 
-void ShadowMapping::update() {}
+void ShadowMapping::update() {
+  ub_.bind(GL_UNIFORM_BUFFER);
+  auto p = reinterpret_cast<Constant*>(glMapBufferRange(GL_UNIFORM_BUFFER, 0, sizeof(Constant), GL_MAP_WRITE_BIT));
+  if (p) {
+    p->mode = mode_;
+    p->shadow_bias = shadow_bias_ * 0.01f;
+  }
+  glUnmapBuffer(GL_UNIFORM_BUFFER);
+}
 
 void ShadowMapping::update_gui() {
   ImGui::Begin("ShadowMapping");
-  ImGui::Combo("debug view", reinterpret_cast<int*>(&debug_view_),
+  ImGui::Combo("debug view", reinterpret_cast<int*>(&mode_),
                "Default\0SHADOWED\0CASTER\0");
   ImGui::DragFloat("Bias * 100", &shadow_bias_, 0.01f, -1.f, 1.f);
   ImGui::TextWrapped("%s", log_.c_str());
@@ -121,12 +136,9 @@ void ShadowMapping::apply(Scene& scene) {
     util::depth_test_dss().apply();
 
     // リソースをバインドする
+    ub_.bind_base(GL_UNIFORM_BUFFER, 8);
     depth_tex_.active(8, GL_TEXTURE_2D);
     ss_.bind(8);
-
-    // 定数を更新する
-    glUniform1ui(32, static_cast<int>(debug_view_));
-    glUniform1f(33, shadow_bias_ * 0.01f);
 
     // シーンを描画する
     scene.apply(ApplyType::SHADE);

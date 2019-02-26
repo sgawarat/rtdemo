@@ -7,8 +7,6 @@
 namespace rtdemo::tech {
 /**
  * @brief Shadow Mapping
- * 
- * 
  */
 class ShadowMapping final : public Technique {
  public:
@@ -26,22 +24,27 @@ class ShadowMapping final : public Technique {
 
  private:
   /**
-   * @brief デバッグ表示
-   * 
+   * @brief モード
    */
-  enum class DebugView : int {
+  enum class Mode : int {
     DEFAULT,  ///< 通常
     SHADOWED,  ///< 影付けされた所を色付けする
     CASTER,  ///< シャドウキャスタの視点
   };
 
+  struct Constant {
+    Mode mode;
+    float shadow_bias;
+  };
+
   garie::Program p0_prog_;  ///< シャドウパスのプログラム
   garie::Program p1_prog_;  ///< シェーディングパスのプログラム
+  garie::Buffer ub_;
   garie::Texture depth_tex_;  ///< シャドウマップのテクスチャ
   garie::Framebuffer p0_fbo_;  ///< シャドウパスのフレームバッファ
   garie::Viewport p0_viewport_;  ///< シャドウパスのビューポート
   garie::Sampler ss_;  ///< サンプラ
-  DebugView debug_view_ = DebugView::DEFAULT;
+  Mode mode_ = Mode::DEFAULT;
   float shadow_bias_ = 0.05f;
   std::string log_;  // シェーダのエラーログ
 };

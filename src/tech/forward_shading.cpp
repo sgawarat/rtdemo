@@ -20,23 +20,36 @@ bool ForwardShading::restore() {
   garie::Program prog = util::link_program(vert, frag, &log_);
   if (!prog) return false;
 
+  // リソースを生成する
+  garie::Buffer ub;
+  ub.gen();
+  ub.bind(GL_UNIFORM_BUFFER);
+  glBufferStorage(GL_UNIFORM_BUFFER, 1024, nullptr, GL_MAP_WRITE_BIT);
+
   // 後始末
   prog_ = std::move(prog);
+  ub_ = std::move(ub);
   log_ = "成功";
   return true;
 }
 
 bool ForwardShading::invalidate() {
   prog_ = garie::Program();
+  ub_ = {};
   log_ = "利用不可";
   return true;
 }
 
-void ForwardShading::update() {}
+void ForwardShading::update() {
+  ub_.bind(GL_UNIFORM_BUFFER);
+  void* p = glMapBufferRange(GL_UNIFORM_BUFFER, 0, sizeof(Mode), GL_MAP_WRITE_BIT);
+  if (p) memcpy(p, &mode_, sizeof(Mode));
+  glUnmapBuffer(GL_UNIFORM_BUFFER);
+}
 
 void ForwardShading::update_gui() {
   ImGui::Begin("ForwardShading");
-  ImGui::Combo("debug view", reinterpret_cast<int*>(&debug_view_), "Default\0Position\0Normal\0Ambient\0Diffuse\0Specular\0SpecularPower\0");
+  ImGui::Combo("debug view", reinterpret_cast<int*>(&mode_), "Default\0Position\0Normal\0Ambient\0Diffuse\0Specular\0SpecularPower\0");
   ImGui::TextWrapped("%s", log_.c_str());
   ImGui::End();
 }
@@ -55,8 +68,8 @@ void ForwardShading::apply(Scene& scene) {
   util::alpha_blending_bs().apply();
   util::depth_test_dss().apply();
 
-  // 定数をアップロードする
-  glUniform1ui(32, static_cast<int>(debug_view_));
+  // リソースをバインドする
+  ub_.bind_base(GL_UNIFORM_BUFFER, 8);
 
   // シーンを描画する
   scene.apply(ApplyType::SHADE);

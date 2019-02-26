@@ -35,9 +35,13 @@ bool DeferredShading::restore() {
   if (!p1_prog) return false;
 
   // リソースを生成する
+  garie::Buffer ub;
+  ub.gen();
+  ub.bind(GL_UNIFORM_BUFFER);
+  glBufferStorage(GL_UNIFORM_BUFFER, 1024, nullptr, GL_MAP_WRITE_BIT);
+
   const GLuint width = Application::get().screen_width();
   const GLuint height = Application::get().screen_height();
-
   garie::Texture ds_tex;
   ds_tex.gen();
   ds_tex.bind(GL_TEXTURE_2D);
@@ -82,6 +86,7 @@ bool DeferredShading::restore() {
   // 後始末
   p0_prog_ = std::move(p0_prog);
   p1_prog_ = std::move(p1_prog);
+  ub_ = std::move(ub);
   ds_tex_ = std::move(ds_tex);
   g0_tex_ = std::move(g0_tex);
   g1_tex_ = std::move(g1_tex);
@@ -98,6 +103,7 @@ bool DeferredShading::restore() {
 bool DeferredShading::invalidate() {
   p0_prog_ = garie::Program();
   p1_prog_ = garie::Program();
+  ub_ = {};
   ds_tex_ = garie::Texture();
   g0_tex_ = garie::Texture();
   g1_tex_ = garie::Texture();
@@ -109,11 +115,16 @@ bool DeferredShading::invalidate() {
   return true;
 }
 
-void DeferredShading::update() {}
+void DeferredShading::update() {
+  ub_.bind(GL_UNIFORM_BUFFER);
+  void* p = glMapBufferRange(GL_UNIFORM_BUFFER, 0, sizeof(Mode), GL_MAP_WRITE_BIT);
+  if (p) memcpy(p, &mode_, sizeof(Mode));
+  glUnmapBuffer(GL_UNIFORM_BUFFER);
+}
 
 void DeferredShading::update_gui() {
   ImGui::Begin("DeferredShading");
-  ImGui::Combo("debug view", reinterpret_cast<int*>(&debug_view_), "Default\0Depth\0Normal\0Ambient\0Diffuse\0Specular\0SpecularPower\0Reconstructed position\0");
+  ImGui::Combo("mode", reinterpret_cast<int*>(&mode_), "Default\0Depth\0Normal\0Ambient\0Diffuse\0Specular\0SpecularPower\0Reconstructed position\0");
   ImGui::TextWrapped("%s", log_.c_str());
   ImGui::End();
 }
@@ -155,6 +166,7 @@ void DeferredShading::apply(Scene& scene) {
     util::default_dss().apply();
 
     // リソースをバインドする
+    ub_.bind_base(GL_UNIFORM_BUFFER, 8);
     ds_tex_.active(8, GL_TEXTURE_2D);
     ss_.bind(8);
     g0_tex_.active(9, GL_TEXTURE_2D);
@@ -166,11 +178,8 @@ void DeferredShading::apply(Scene& scene) {
     g3_tex_.active(12, GL_TEXTURE_2D);
     ss_.bind(12);
 
-    // 定数をアップロードする
-    glUniform1i(32, static_cast<int>(debug_view_));
-
     // ライトボリュームを描画する
-    if (debug_view_ == DebugView::DEFAULT) {
+    if (mode_ == Mode::DEFAULT) {
       scene.apply(ApplyType::LIGHT);
       scene.draw(DrawType::LIGHT_VOLUME);
     } else {

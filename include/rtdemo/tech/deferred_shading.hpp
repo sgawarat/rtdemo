@@ -7,7 +7,6 @@
 namespace rtdemo::tech {
 /**
  * @brief Deferred Shading
- * 
  */
 class DeferredShading final : public Technique {
  public:
@@ -25,10 +24,9 @@ class DeferredShading final : public Technique {
 
  private:
   /**
-   * @brief デバッグ表示
-   * 
+   * @brief モード
    */
-  enum class DebugView : int {
+  enum class Mode : int {
     DEFAULT,  ///< 通常
     DEPTH,  ///< 深度
     NORMAL,  ///< 法線
@@ -41,6 +39,7 @@ class DeferredShading final : public Technique {
 
   garie::Program p0_prog_;  ///< Gパスのプログラム
   garie::Program p1_prog_;  ///< Lパスのプログラム
+  garie::Buffer ub_;
   garie::Texture ds_tex_;
   garie::Texture g0_tex_;
   garie::Texture g1_tex_;
@@ -49,7 +48,7 @@ class DeferredShading final : public Technique {
   garie::Framebuffer fbo_;
   garie::Viewport viewport_;
   garie::Sampler ss_;
-  DebugView debug_view_ = DebugView::DEFAULT;
+  Mode mode_ = Mode::DEFAULT;
   std::string log_;  // シェーダのエラーログ
 };
 }  // namespace rtdemo::tech

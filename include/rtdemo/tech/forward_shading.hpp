@@ -7,7 +7,6 @@
 namespace rtdemo::tech {
 /**
  * @brief Forward Shading
- * 
  */
 class ForwardShading final : public Technique {
  public:
@@ -25,10 +24,9 @@ class ForwardShading final : public Technique {
 
  private:
   /**
-   * @brief デバッグ表示
-   * 
+   * @brief モード
    */
-  enum class DebugView : int {
+  enum class Mode : int {
     DEFAULT,  ///< 通常
     POSITION,  ///< 位置
     NORMAL,  ///< 法線
@@ -39,7 +37,8 @@ class ForwardShading final : public Technique {
   };
 
   garie::Program prog_;
-  DebugView debug_view_ = DebugView::DEFAULT;
+  garie::Buffer ub_;
+  Mode mode_ = Mode::DEFAULT;
   std::string log_;  // シェーダのエラーログ
 };
 }  // namespace rtdemo::tech
