@@ -9,19 +9,19 @@ RT_MANAGED_TECHNIQUE(ShadowMapping);
 bool ShadowMapping::restore() {
   // シェーダを読み込む
   garie::VertexShader p0_vert = util::compile_vertex_shader_from_file(
-      "assets/shaders/shadow_mapping_p0.vert", &log_);
+      "shadow_mapping_p0.vert", &log_);
   if (!p0_vert) return false;
 
   garie::VertexShader p1_vert = util::compile_vertex_shader_from_file(
-      "assets/shaders/shadow_mapping_p1.vert", &log_);
+      "shadow_mapping_p1.vert", &log_);
   if (!p1_vert) return false;
 
   garie::FragmentShader p0_frag = util::compile_fragment_shader_from_file(
-      "assets/shaders/shadow_mapping_p0.frag", &log_);
+      "shadow_mapping_p0.frag", &log_);
   if (!p0_frag) return false;
 
   garie::FragmentShader p1_frag = util::compile_fragment_shader_from_file(
-      "assets/shaders/shadow_mapping_p1.frag", &log_);
+      "shadow_mapping_p1.frag", &log_);
   if (!p1_frag) return false;
 
   garie::Program p0_prog = util::link_program(p0_vert, p0_frag, &log_);

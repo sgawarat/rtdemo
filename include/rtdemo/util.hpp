@@ -1,9 +1,17 @@
 #pragma once
 
 #include <string>
+#include <filesystem>
 #include "garie.hpp"
 
 namespace rtdemo::util {
+/**
+ * @brief シェーダファイルを探すディレクトリを指定する
+ * 
+ * @param path ディレクトリへのパス
+ */
+void set_shader_search_path(std::filesystem::path path);
+
 /**
  * @brief ファイルから頂点シェーダをコンパイルする
  * 
@@ -12,7 +20,7 @@ namespace rtdemo::util {
  * @return garie::VertexShader 生成したシェーダオブジェクト
  */
 garie::VertexShader compile_vertex_shader_from_file(
-    const char* path, std::string* log_ptr = nullptr);
+    std::filesystem::path path, std::string* log_ptr = nullptr);
 
 /**
  * @brief ファイルからフラグメントシェーダをコンパイルする
@@ -22,7 +30,7 @@ garie::VertexShader compile_vertex_shader_from_file(
  * @return garie::VertexShader 生成したシェーダオブジェクト
  */
 garie::FragmentShader compile_fragment_shader_from_file(
-    const char* path, std::string* log_ptr = nullptr);
+    std::filesystem::path path, std::string* log_ptr = nullptr);
 
 /**
  * @brief ファイルからコンピュートシェーダをコンパイルする
@@ -32,7 +40,7 @@ garie::FragmentShader compile_fragment_shader_from_file(
  * @return garie::VertexShader 生成したシェーダオブジェクト
  */
 garie::ComputeShader compile_compute_shader_from_file(
-    const char* path, std::string* log_ptr = nullptr);
+    std::filesystem::path path, std::string* log_ptr = nullptr);
 
 /**
  * @brief ファイルから頂点シェーダをロードする
@@ -42,7 +50,7 @@ garie::ComputeShader compile_compute_shader_from_file(
  * @return garie::VertexShader 生成したシェーダオブジェクト
  */
 garie::VertexShader load_vertex_shader_from_file(
-    const char* path, std::string* log_ptr = nullptr);
+    std::filesystem::path path, std::string* log_ptr = nullptr);
 
 /**
  * @brief ファイルからフラグメントシェーダをロードする
@@ -52,7 +60,7 @@ garie::VertexShader load_vertex_shader_from_file(
  * @return garie::VertexShader 生成したシェーダオブジェクト
  */
 garie::FragmentShader load_fragment_shader_from_file(
-    const char* path, std::string* log_ptr = nullptr);
+    std::filesystem::path path, std::string* log_ptr = nullptr);
 
 /**
  * @brief ファイルからコンピュートシェーダをロードする
@@ -62,7 +70,7 @@ garie::FragmentShader load_fragment_shader_from_file(
  * @return garie::VertexShader 生成したシェーダオブジェクト
  */
 garie::ComputeShader load_compute_shader_from_file(
-    const char* path, std::string* log_ptr = nullptr);
+    std::filesystem::path path, std::string* log_ptr = nullptr);
 
 
 /**

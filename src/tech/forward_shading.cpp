@@ -9,12 +9,12 @@ RT_MANAGED_TECHNIQUE(ForwardShading);
 bool ForwardShading::restore() {
   // シェーダを読み込む
   garie::VertexShader vert = util::compile_vertex_shader_from_file(
-      "assets/shaders/forward_shading.vert", &log_);
+      "forward_shading.vert", &log_);
   if (!vert) return false;
 
   garie::FragmentShader frag =
   util::compile_fragment_shader_from_file(
-          "assets/shaders/forward_shading.frag", &log_);
+          "forward_shading.frag", &log_);
   if (!frag) return false;
 
   garie::Program prog = util::link_program(vert, frag, &log_);
