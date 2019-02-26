@@ -12,7 +12,7 @@ inline garie::Shader<TYPE> compile_shader_from_file(const char* path,
   garie::Shader<TYPE> shader;
 
   // ファイルを開く
-  std::ifstream ifs(path);
+  std::ifstream ifs(path, std::ios::in | std::ios::binary);
   if (!ifs) {
     if (log_ptr) *log_ptr = fmt::format("{}を開けない", path);
     RT_ERROR("ファイルのオープンに失敗した (path:{})", path);
