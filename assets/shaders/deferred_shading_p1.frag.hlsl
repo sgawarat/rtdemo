@@ -1,4 +1,4 @@
-﻿#include "detail/types.hlsli"
+﻿#include <common.hlsli>
 
 // 入力
 struct PSInput {
@@ -28,12 +28,6 @@ struct Debug {
 [[vk::binding(11)]] Texture2D<float4> GBUFFER2 : register(t11);
 [[vk::binding(12)]] Texture2D<float4> GBUFFER3 : register(t12);
 SamplerState SAMPLER : register(s8);
-
-// push constant
-struct PushConstant {
-    uint draw_id;
-};
-[[vk::push_constant]] PushConstant CONSTANTS;
 
 void main(in PSInput i, out PSOutput o) {
     float2 texcoord = i.position_ndc.xy * 0.5f + float2(0.5f, 0.5f);
@@ -73,7 +67,7 @@ void main(in PSInput i, out PSOutput o) {
         float3 v = normalize(CAMERA.position_w - position_w);
         float3 n = normalize(normal_w);
 
-        PointLight LIGHT = LIGHTS[CONSTANTS.draw_id];
+        PointLight LIGHT = LIGHTS[G.draw_id];
 
         float3 lv = LIGHT.position_w - position_w;
         float l_len = length(lv);

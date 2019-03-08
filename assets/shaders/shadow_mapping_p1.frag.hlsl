@@ -1,4 +1,4 @@
-﻿#include "detail/types.hlsli"
+﻿#include <common.hlsli>
 
 // 入力
 struct PSInput {
@@ -30,14 +30,8 @@ struct Debug {
 [[vk::binding(8)]] Texture2D<float> SHADOW : register(t8);
 SamplerState SAMPLER : register(s8);
 
-// push constant
-struct PushConstant {
-    uint draw_id;
-};
-[[vk::push_constant]] PushConstant CONSTANTS;
-
 void main(in PSInput i, out PSOutput o) {
-    Material MATERIAL = MATERIALS[RESOURCE_INDICES[CONSTANTS.draw_id]];
+    Material MATERIAL = MATERIALS[RESOURCE_INDICES[G.draw_id]];
 
     float3 final_color;
     if (DEBUG.mode == 1) {  // SHADOWED

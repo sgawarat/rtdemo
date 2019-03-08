@@ -1,4 +1,4 @@
-﻿#include "detail/types.hlsli"
+﻿#include <common.hlsli>
 
 // 入力
 struct PSInput {
@@ -21,15 +21,8 @@ struct PSOutput {
 [[vk::binding(0)]] StructuredBuffer<uint> RESOURCE_INDICES : register(t0);
 [[vk::binding(1)]] StructuredBuffer<Material> MATERIALS : register(t1);
 
-// push constant
-struct PushConstant {
-    uint draw_id;
-};
-[[vk::push_constant]] PushConstant CONSTANTS;
-
-
 void main(in PSInput i, out PSOutput o) {
-    Material MATERIAL = MATERIALS[RESOURCE_INDICES[CONSTANTS.draw_id]];
+    Material MATERIAL = MATERIALS[RESOURCE_INDICES[G.draw_id]];
 
     o.frag_color0.rgb = normalize(i.normal_w) * 0.5f + float3(0.5f, 0.5f, 0.5f);
     o.frag_color0.a = 0.f;

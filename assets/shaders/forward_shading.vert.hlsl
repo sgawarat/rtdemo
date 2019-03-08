@@ -1,4 +1,4 @@
-﻿#include "detail/types.hlsli"
+﻿#include <common.hlsli>
 
 // 入力
 struct VSInput {
@@ -17,12 +17,6 @@ struct VSOutput {
 
 // b
 [[vk::binding(0)]] ConstantBuffer<Camera> CAMERA : register(b0);
-
-// push constant
-struct PushConstant {
-    uint draw_id;
-};
-[[vk::push_constant]] PushConstant CONSTANTS;
 
 void main(in VSInput i, out VSOutput o) {
     // クリップ空間の位置を計算する

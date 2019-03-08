@@ -1,4 +1,4 @@
-﻿#include "detail/types.hlsli"
+﻿#include <common.hlsli>
 
 // 入力
 struct VSInput {

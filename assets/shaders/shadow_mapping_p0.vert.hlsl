@@ -1,4 +1,4 @@
-﻿#include "detail/types.hlsli"
+﻿#include <common.hlsli>
 
 // 入力
 struct VSInput {
@@ -14,12 +14,6 @@ struct VSOutput {
 
 // t
 [[vk::binding(0)]] StructuredBuffer<ShadowCaster> SHADOW_CASTERS : register(t0);
-
-// push constant
-struct PushConstant {
-    uint draw_id;
-};
-[[vk::push_constant]] PushConstant CONSTANTS;
 
 void main(in VSInput i, out VSOutput o) {
     float4 position_c = mul(float4(i.position, 1.f), SHADOW_CASTERS[0].view_proj);

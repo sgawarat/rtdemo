@@ -1,4 +1,4 @@
-﻿#include "detail/types.hlsli"
+﻿#include <common.hlsli>
 
 // 入力
 struct VSInput {
@@ -31,14 +31,8 @@ struct Debug {
 [[vk::binding(12)]] Texture2D<float4> GBUFFER3 : register(t12);
 SamplerState SAMPLER : register(s0);
 
-// push constant
-struct PushConstant {
-    uint draw_id;
-};
-[[vk::push_constant]] PushConstant CONSTANTS;
-
 void main(in VSInput i, out VSOutput o) {
-    PointLight LIGHT = LIGHTS[CONSTANTS.draw_id];
+    PointLight LIGHT = LIGHTS[G.draw_id];
 
     float4 position_c = float4(i.position, 0.f, 1.f);
 

@@ -1,4 +1,4 @@
-﻿#include "detail/types.hlsli"
+﻿#include <common.hlsli>
 
 // 入力
 struct PSInput {
@@ -26,15 +26,9 @@ struct Debug {
 [[vk::binding(1)]] StructuredBuffer<Material> MATERIALS : register(t1);
 [[vk::binding(2)]] StructuredBuffer<PointLight> LIGHTS : register(t2);
 
-// push constant
-struct PushConstant {
-    uint draw_id;
-};
-[[vk::push_constant]] PushConstant CONSTANTS;
-
 void main(in PSInput i, out PSOutput o) {
     // 描画IDが指定するマテリアルを取得する
-    Material MATERIAL = MATERIALS[RESOURCE_INDICES[CONSTANTS.draw_id]];
+    Material MATERIAL = MATERIALS[RESOURCE_INDICES[G.draw_id]];
 
     float3 final_color;
     if (DEBUG.mode == 1) {  // 位置

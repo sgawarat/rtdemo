@@ -30,7 +30,25 @@ struct ShadowCaster {
     float4x4 view_proj;
 };
 
-struct GridCell {
-    uint first;
-    uint count;
+// 球
+struct Sphere {
+    float3 c;  // 中心点の位置
+    float r;  // 半径
 };
+
+// 平面
+struct Plane {
+    float3 n;  // 法線
+    float d;  // 原点からの距離
+};
+
+Plane new_plane(float3 n, float d) {
+    Plane plane = {n, d};
+    return plane;
+}
+
+// push constant
+struct PushConstant {
+    uint draw_id;
+};
+[[vk::push_constant]] PushConstant G;
