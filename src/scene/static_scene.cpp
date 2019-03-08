@@ -145,6 +145,12 @@ bool StaticScene::restore() {
   glBufferStorage(
       GL_UNIFORM_BUFFER, sizeof(Camera), nullptr, GL_MAP_WRITE_BIT);
 
+  garie::Buffer constant_ubo;
+  constant_ubo.gen();
+  constant_ubo.bind(GL_UNIFORM_BUFFER);
+  glBufferStorage(
+      GL_UNIFORM_BUFFER, sizeof(Constant), nullptr, GL_MAP_WRITE_BIT);
+
   garie::Buffer resource_index_ssbo;
   resource_index_ssbo.gen();
   resource_index_ssbo.bind(GL_SHADER_STORAGE_BUFFER);
@@ -188,6 +194,7 @@ bool StaticScene::restore() {
   vbo_ = std::move(vbo);
   ibo_ = std::move(ibo);
   camera_ubo_ = std::move(camera_ubo);
+  constant_ubo_ = std::move(constant_ubo);
   resource_index_ssbo_ = std::move(resource_index_ssbo);
   material_ssbo_ = std::move(material_ssbo);
   light_ssbo_ = std::move(light_ssbo);
@@ -203,6 +210,7 @@ bool StaticScene::invalidate() {
   vbo_ = garie::Buffer();
   ibo_ = garie::Buffer();
   camera_ubo_ = garie::Buffer();
+  constant_ubo_ = garie::Buffer();
   resource_index_ssbo_ = garie::Buffer();
   material_ssbo_ = garie::Buffer();
   light_ssbo_ = garie::Buffer();
@@ -228,18 +236,31 @@ void StaticScene::update() {
 
   // カメラ情報を更新する
   camera_ubo_.bind(GL_UNIFORM_BUFFER);
-  Camera* mapped_camera_ubo =
+  Camera* camera =
   reinterpret_cast<Camera*>(glMapBufferRange(
       GL_UNIFORM_BUFFER, 0, sizeof(Camera),
       GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
-  mapped_camera_ubo->view_proj = view_proj;
-  mapped_camera_ubo->view = view;
-  mapped_camera_ubo->proj = proj;
-  mapped_camera_ubo->view_proj_inv = glm::inverse(view_proj);
-  mapped_camera_ubo->view_inv = glm::inverse(view);
-  mapped_camera_ubo->proj_inv = glm::inverse(proj);
-  mapped_camera_ubo->position_w = eye;
-  glUnmapBuffer(GL_UNIFORM_BUFFER);
+  if (camera) {
+    camera->view_proj = view_proj;
+    camera->view = view;
+    camera->proj = proj;
+    camera->view_proj_inv = glm::inverse(view_proj);
+    camera->view_inv = glm::inverse(view);
+    camera->proj_inv = glm::inverse(proj);
+    camera->position_w = eye;
+    glUnmapBuffer(GL_UNIFORM_BUFFER);
+  }
+
+  // 定数情報を更新する
+  constant_ubo_.bind(GL_UNIFORM_BUFFER);
+  Constant* constant =
+  reinterpret_cast<Constant*>(glMapBufferRange(
+      GL_UNIFORM_BUFFER, 0, sizeof(Constant),
+      GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
+  if (constant) {
+    constant->light_count = static_cast<uint32_t>(light_count_);
+    glUnmapBuffer(GL_UNIFORM_BUFFER);
+  }
 }
 
 void StaticScene::update_gui() {
@@ -258,6 +279,7 @@ void StaticScene::apply(ApplyType type) {
   switch (type) {
     case ApplyType::SHADE: {
       camera_ubo_.bind_base(GL_UNIFORM_BUFFER, 0);
+      constant_ubo_.bind_base(GL_UNIFORM_BUFFER, 7);
       
       resource_index_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
       material_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 1);
@@ -267,15 +289,19 @@ void StaticScene::apply(ApplyType type) {
     }
     case ApplyType::NO_SHADE: {
       camera_ubo_.bind_base(GL_UNIFORM_BUFFER, 0);
+      constant_ubo_.bind_base(GL_UNIFORM_BUFFER, 7);
       break;
     }
     case ApplyType::LIGHT: {
       camera_ubo_.bind_base(GL_UNIFORM_BUFFER, 0);
+      constant_ubo_.bind_base(GL_UNIFORM_BUFFER, 7);
       
       light_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
       break;
     }
     case ApplyType::SHADOW: {
+      constant_ubo_.bind_base(GL_UNIFORM_BUFFER, 7);
+
       shadow_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
       break;
     }

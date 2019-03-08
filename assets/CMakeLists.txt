@@ -10,13 +10,13 @@ set(SHADER_SOURCES
     deferred_shading_p0.frag
     deferred_shading_p1.vert
     deferred_shading_p1.frag
-    # tiled_forward_shading_p0.vert
-    # tiled_forward_shading_p0.frag
-    # tiled_forward_shading_p1.comp
-    # tiled_forward_shading_p2.vert
-    # tiled_forward_shading_p2.frag
-    # tiled_forward_shading_p3.vert
-    # tiled_forward_shading_p3.frag
+    tiled_forward_shading/p0.vert
+    tiled_forward_shading/p0.frag
+    tiled_forward_shading/p1.comp
+    tiled_forward_shading/p2.vert
+    tiled_forward_shading/p2.frag
+    tiled_forward_shading/p3.vert
+    tiled_forward_shading/p3.frag
     shadow_mapping_p0.vert
     shadow_mapping_p0.frag
     shadow_mapping_p1.vert

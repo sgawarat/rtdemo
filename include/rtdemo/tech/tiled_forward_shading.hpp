@@ -31,12 +31,14 @@ private:
   struct GridCell {
     uint32_t first;
     uint32_t count;
+    float min_depth;
+    float max_depth;
   };
 
   /**
-   * @brief デバッグ表示
+   * @brief モード
    */
-  enum class DebugView : int {
+  enum class Mode : int {
     DEFAULT,  ///< 通常
     POSITION,  ///< 位置
     NORMAL,  ///< 法線
@@ -46,6 +48,14 @@ private:
     SPECULAR_POWER,  ///< スペキュラパワー
     TILE_INDEX,  ///< タイル番号
     TILE_LIGHT_COUNT,  ///< タイルのライト数
+    TILE_DEPTH,  ///< タイルの深度範囲
+  };
+
+  struct Constant {
+    uint32_t tile_count[2];
+    uint32_t dispatch_count[2];
+    Mode mode;
+    float _pad[3];
   };
 
   garie::Program p0_prog_;
@@ -57,9 +67,11 @@ private:
   garie::Framebuffer p0_fbo_;
   garie::Framebuffer p2_fbo_;
   garie::Viewport viewport_;
-  garie::Buffer light_grid_ssbo_;
-  garie::Buffer light_index_ssbo_;
-  DebugView debug_view_ = DebugView::DEFAULT;
+  garie::Buffer constant_ubo_;
+  garie::Buffer tiles_ssbo_;
+  garie::Buffer light_indices_ssbo_;
+  garie::Buffer light_index_count_ssbo_;
+  Mode mode_ = Mode::DEFAULT;
   size_t grid_width_ = 0;
   size_t grid_height_ = 0;
   std::string log_;  ///< シェーダのエラーログ

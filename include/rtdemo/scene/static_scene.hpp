@@ -44,6 +44,11 @@ class StaticScene final : public Scene {
     GLuint base_instance;
   };
 
+  struct Constant {
+    uint32_t light_count;
+    float _pad[3];
+  };
+
   float camera_center_ = 0.f;  ///< カメラの中心
   float camera_distance_ = 0.f;  ///< カメラの距離
   float camera_yaw_ = 0.f;  ///< カメラのY軸回転角度
@@ -55,6 +60,7 @@ class StaticScene final : public Scene {
   garie::Buffer vbo_;
   garie::Buffer ibo_;
   garie::Buffer camera_ubo_;
+  garie::Buffer constant_ubo_;
   garie::Buffer resource_index_ssbo_;
   garie::Buffer material_ssbo_;
   garie::Buffer light_ssbo_;
