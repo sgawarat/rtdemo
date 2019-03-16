@@ -77,7 +77,6 @@ class Application final {
   using SceneMap = std::map<std::string, std::shared_ptr<Scene>>;
   using TechniqueMap = std::map<std::string, std::shared_ptr<Technique>>;
 
-
   GLFWwindow* window_ = nullptr;  ///< ウィンドウハンドル
   uint32_t screen_width_ = 0;  ///< バックバッファの幅
   uint32_t screen_height_ = 0;  ///< バックバッファの高さ

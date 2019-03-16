@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <glm/glm.hpp>
 #include <rtdemo/garie.hpp>
 #include <rtdemo/scene.hpp>
 
@@ -66,6 +67,8 @@ class StaticScene final : public Scene {
   garie::Buffer light_ssbo_;
   garie::Buffer shadow_ssbo_;
   size_t light_count_ = 0;
+  glm::vec3 light_position_{0.f, 3.f, 0.f};
+  float light_radius_ = 7.f;
   garie::Buffer dio_;  ///< indirect描画コマンドのバッファ
   std::vector<Command> commands_;
 };

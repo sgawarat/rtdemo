@@ -1,5 +1,6 @@
 #include <rtdemo/scene/static_scene.hpp>
 #include <vector>
+#include <random>
 #include <glm/ext.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -88,27 +89,18 @@ bool StaticScene::restore() {
   // ライトのデータをコピーする
   // TODO:シーンから実際のライトデータをコピーする
   std::vector<PointLight> lights;
-  lights.reserve(2);
-  lights.push_back(PointLight{
-    {0.f, 3.f, 2.f},
-    7.f,
-    {1.f, 1.f, 1.f},
-    1.f,
-  });
-  // lights.push_back(PointLight{
-  //   {8.f, 1.f, 8.f},
-  //   1.f,
-  //   {1.f, 1.f, 1.f},
-  //   5.f,
-  // });
-  // lights.reserve(scene->mNumLights);
-  // for (size_t i = 0; i < scene->mNumLights; ++i) {
-  //   const aiLight* light = scene->mLights[i];
-  //   const auto& p = light->mPosition;
-  //   lights.push_back(Layout::Light{
-  //     {p.x, p.y, p.z},
-  //   });
-  // }
+  lights.reserve(32);
+  std::mt19937_64 engine;
+  std::uniform_real_distribution<float> dist;
+  std::uniform_real_distribution<float> dist10(-10.f, 10.f);
+  for (size_t i = 0; i < lights.capacity(); ++i) {
+    lights.push_back(PointLight{
+      {dist10(engine), dist10(engine), dist10(engine)},
+      3.f + dist(engine) * 7.f,
+      {dist(engine), dist(engine), dist(engine)},
+      1.f,
+    });
+  }
 
   // シャドウキャスタのデータをコピーする
   std::vector<ShadowCaster> shadow_casters;
@@ -169,7 +161,7 @@ bool StaticScene::restore() {
   light_ssbo.gen();
   light_ssbo.bind(GL_SHADER_STORAGE_BUFFER);
   glBufferStorage(GL_SHADER_STORAGE_BUFFER,
-                  lights.size() * sizeof(PointLight), lights.data(), 0);
+                  lights.size() * sizeof(PointLight), lights.data(), GL_MAP_WRITE_BIT);
 
   garie::Buffer shadow_ssbo;
   shadow_ssbo.gen();
@@ -251,6 +243,20 @@ void StaticScene::update() {
     glUnmapBuffer(GL_UNIFORM_BUFFER);
   }
 
+  // ライト情報を更新する
+  light_ssbo_.bind(GL_SHADER_STORAGE_BUFFER);
+  PointLight* lights =
+  reinterpret_cast<PointLight*>(glMapBufferRange(
+      GL_SHADER_STORAGE_BUFFER, 0, sizeof(PointLight),
+      GL_MAP_WRITE_BIT));
+  if (lights) {
+    lights[0].position_w = light_position_;
+    lights[0].radius = light_radius_;
+    lights[0].color = glm::vec3(1.f, 1.f, 1.f);
+    lights[0].intensity = 1.f;
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+  }
+
   // 定数情報を更新する
   constant_ubo_.bind(GL_UNIFORM_BUFFER);
   Constant* constant =
@@ -270,6 +276,8 @@ void StaticScene::update_gui() {
   ImGui::SliderAngle("yaw", &camera_yaw_, -180.f, 180.f);
   ImGui::SliderAngle("pitch", &camera_pitch_, -90.f, 90.f);
   ImGui::DragFloat("depth", &lens_depth_, 0.01f, 0.01f, 30.f);
+  ImGui::DragFloat3("position", glm::value_ptr(light_position_), 0.1f, -10.f, 10.f);
+  ImGui::SliderFloat("radius", &light_radius_, 0.f, 20.f);
   ImGui::Combo("draw mode", reinterpret_cast<int*>(&draw_mode_),
                "DRAW\0DRAW_INDIRECT\0\0");
   ImGui::End();

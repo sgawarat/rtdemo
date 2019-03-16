@@ -23,16 +23,16 @@ class TiledForwardShading final : public Technique {
   void apply(Scene& scene) override;
 
 private:
+  static constexpr size_t TILE_WIDTH = 32;
+  static constexpr size_t TILE_HEIGHT = 32;
   static constexpr size_t MAX_LIGHT_COUNT = 200;
 
   /**
-   * @brief グリッドセル
+   * @brief タイル
    */
-  struct GridCell {
-    uint32_t first;
-    uint32_t count;
-    float min_depth;
-    float max_depth;
+  struct Tile {
+    uint32_t light_index_first;
+    uint32_t light_index_count;
   };
 
   /**
@@ -48,14 +48,22 @@ private:
     SPECULAR_POWER,  ///< スペキュラパワー
     TILE_INDEX,  ///< タイル番号
     TILE_LIGHT_COUNT,  ///< タイルのライト数
-    TILE_DEPTH,  ///< タイルの深度範囲
+    SHADED,  ///< シェーディングされたか
   };
 
   struct Constant {
     uint32_t tile_count[2];
-    uint32_t dispatch_count[2];
+    uint32_t pixel_count[2];
     Mode mode;
     float _pad[3];
+  };
+
+  struct Print {
+    float light_position_v[4];
+    float frustum_plane0[4];
+    float dot_product;
+    float light_radius;
+    float _pad[2];
   };
 
   garie::Program p0_prog_;
@@ -71,9 +79,10 @@ private:
   garie::Buffer tiles_ssbo_;
   garie::Buffer light_indices_ssbo_;
   garie::Buffer light_index_count_ssbo_;
+  garie::Buffer print_ssbo_;
   Mode mode_ = Mode::DEFAULT;
-  size_t grid_width_ = 0;
-  size_t grid_height_ = 0;
+  uint32_t tiled_screen_width_ = 0;
+  uint32_t tiled_screen_height_ = 0;
   std::string log_;  ///< シェーダのエラーログ
 };
 }  // namespace rtdemo::tech

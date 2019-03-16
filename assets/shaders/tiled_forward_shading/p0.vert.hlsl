@@ -7,13 +7,11 @@
 // 入力
 struct VSInput {
     [[vk::location(0)]] float3 position : POSITION;
-    // [[vk::builtin("DrawIndex")]] uint draw_id : DRAW_ID;
 };
 
 // 出力
 struct VSOutput {
     float4 position : SV_Position;
-    // [[vk::location(1)]] uint draw_id : DRAW_ID;
 };
 
 // b

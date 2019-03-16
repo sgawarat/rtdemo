@@ -1,6 +1,7 @@
 #include <rtdemo/tech/tiled_forward_shading.hpp>
 #include <imgui.h>
 #include <gsl/gsl>
+#include <glm/glm.hpp>
 #include <rtdemo/logging.hpp>
 #include <rtdemo/util.hpp>
 
@@ -8,6 +9,7 @@ namespace rtdemo::tech {
 RT_MANAGED_TECHNIQUE(TiledForwardShading);
 
 bool TiledForwardShading::restore() {
+  // 成功しなければ、リソースを破棄するように設定する
   bool succeeded = false;
   auto _ = gsl::finally([&, this] {
     if (!succeeded) invalidate();
@@ -55,19 +57,21 @@ bool TiledForwardShading::restore() {
   p3_prog_ = util::link_program(p3_vert, p3_frag, &log_);
   if (!p3_prog_) return false;
 
-  const GLuint width = Application::get().screen_width();
-  const GLuint height = Application::get().screen_height();
-  grid_width_ = (width + 31) / 32;
-  grid_height_ = (height + 31) / 32;
+  // スクリーンを占めるタイル数を計算する
+  const uint32_t screen_width = Application::get().screen_width();
+  const uint32_t screen_height = Application::get().screen_height();
+  tiled_screen_width_ = (screen_width + TILE_WIDTH - 1) / TILE_WIDTH;
+  tiled_screen_height_ = (screen_height + TILE_HEIGHT - 1) / TILE_HEIGHT;
+  const uint32_t tiled_screen_size = tiled_screen_width_ * tiled_screen_height_;
 
   // リソースを生成する
   depth_tex_.gen();
   depth_tex_.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, width, height);
+  glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, screen_width, screen_height);
 
   rt0_tex_.gen();
   rt0_tex_.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
+  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, screen_width, screen_height);
 
   p0_fbo_ = garie::FramebufferBuilder()
       .depth_texture(depth_tex_)
@@ -78,7 +82,7 @@ bool TiledForwardShading::restore() {
       .color_texture(0, rt0_tex_)
       .build();
 
-  viewport_ = garie::Viewport(0.f, 0.f, static_cast<float>(width), static_cast<float>(height));
+  viewport_ = garie::Viewport(0.f, 0.f, static_cast<float>(screen_width), static_cast<float>(screen_height));
 
   constant_ubo_.gen();
   constant_ubo_.bind(GL_UNIFORM_BUFFER);
@@ -86,15 +90,19 @@ bool TiledForwardShading::restore() {
 
   tiles_ssbo_.gen();
   tiles_ssbo_.bind(GL_SHADER_STORAGE_BUFFER);
-  glBufferStorage(GL_SHADER_STORAGE_BUFFER, grid_width_ * grid_height_ * sizeof(GridCell), nullptr, 0);
+  glBufferStorage(GL_SHADER_STORAGE_BUFFER, tiled_screen_size * sizeof(Tile), nullptr, 0);
 
   light_indices_ssbo_.gen();
   light_indices_ssbo_.bind(GL_SHADER_STORAGE_BUFFER);
-  glBufferStorage(GL_SHADER_STORAGE_BUFFER, MAX_LIGHT_COUNT * grid_width_ * grid_height_ * sizeof(uint32_t), nullptr, 0);
+  glBufferStorage(GL_SHADER_STORAGE_BUFFER, MAX_LIGHT_COUNT * tiled_screen_size * sizeof(uint32_t), nullptr, 0);
 
   light_index_count_ssbo_.gen();
   light_index_count_ssbo_.bind(GL_SHADER_STORAGE_BUFFER);
   glBufferStorage(GL_SHADER_STORAGE_BUFFER, sizeof(uint32_t), nullptr, 0);
+
+  print_ssbo_.gen();
+  print_ssbo_.bind(GL_SHADER_STORAGE_BUFFER);
+  glBufferStorage(GL_SHADER_STORAGE_BUFFER, tiled_screen_size * sizeof(Print), nullptr, 0);
 
   log_ = "成功";
 
@@ -115,6 +123,7 @@ bool TiledForwardShading::invalidate() {
   tiles_ssbo_.del();
   light_indices_ssbo_.del();
   light_index_count_ssbo_.del();
+  print_ssbo_.del();
   log_ = "利用不可";
   return true;
 }
@@ -125,10 +134,10 @@ void TiledForwardShading::update() {
   constant_ubo_.bind(GL_UNIFORM_BUFFER);
   auto constant = reinterpret_cast<Constant*>(glMapBufferRange(GL_UNIFORM_BUFFER, 0, sizeof(Constant), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
   if (constant) {
-    constant->tile_count[0] = (app.screen_width() + 31) / 32;
-    constant->tile_count[1] = (app.screen_height() + 31) / 32;
-    constant->dispatch_count[0] = 0;
-    constant->dispatch_count[1] = 0;
+    constant->tile_count[0] = (app.screen_width() + TILE_WIDTH - 1) / TILE_WIDTH;
+    constant->tile_count[1] = (app.screen_height() + TILE_HEIGHT - 1) / TILE_HEIGHT;
+    constant->pixel_count[0] = app.screen_width();
+    constant->pixel_count[1] = app.screen_height();
     constant->mode = mode_;
     glUnmapBuffer(GL_UNIFORM_BUFFER);
   }
@@ -136,7 +145,7 @@ void TiledForwardShading::update() {
 
 void TiledForwardShading::update_gui() {
   ImGui::Begin("TiledForwardShading");
-  ImGui::Combo("debug view", reinterpret_cast<int*>(&mode_), "Default\0Position\0Normal\0Ambient\0Diffuse\0Specular\0SpecularPower\0TileIndex\0TileLightCount\0TileDepth\0");
+  ImGui::Combo("debug view", reinterpret_cast<int*>(&mode_), "Default\0Position\0Normal\0Ambient\0Diffuse\0Specular\0SpecularPower\0TileIndex\0TileLightCount\0Shaded\0");
   ImGui::TextWrapped("%s", log_.c_str());
   ImGui::End();
 }
@@ -176,10 +185,11 @@ void TiledForwardShading::apply(Scene& scene) {
     tiles_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 8);
     light_indices_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 9);
     light_index_count_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 10);
+    print_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 15);
 
     // ディスパッチ
     scene.apply(ApplyType::LIGHT);
-    glDispatchCompute(static_cast<GLuint>(grid_width_), static_cast<GLuint>(grid_height_), 1);
+    glDispatchCompute(tiled_screen_width_, tiled_screen_height_, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
   }
 
