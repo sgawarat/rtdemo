@@ -37,15 +37,20 @@ class DeferredShading final : public Technique {
     RECONSTRUCTED_POSITION,  ///< 再構築された位置
   };
 
+  struct Constant {
+    Mode mode;
+    float _pad[3];
+  };
+
   garie::Program p0_prog_;  ///< Gパスのプログラム
   garie::Program p1_prog_;  ///< Lパスのプログラム
-  garie::Buffer ub_;
-  garie::Texture ds_tex_;
-  garie::Texture g0_tex_;
-  garie::Texture g1_tex_;
-  garie::Texture g2_tex_;
-  garie::Texture g3_tex_;
-  garie::Framebuffer fbo_;
+  garie::Buffer constant_ub_;  ///< 定数用バッファ
+  garie::Texture ds_tex_;  ///< 深度ステンシル
+  garie::Texture g0_tex_;  ///< Gバッファ（1枚目）
+  garie::Texture g1_tex_;  ///< Gバッファ（2枚目）
+  garie::Texture g2_tex_;  ///< Gバッファ（3枚目）
+  garie::Texture g3_tex_;  ///< Gバッファ（4枚目）
+  garie::Framebuffer fb_;
   garie::Viewport viewport_;
   garie::Sampler ss_;
   Mode mode_ = Mode::DEFAULT;

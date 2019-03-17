@@ -6,10 +6,10 @@ project(assets VERSION 0.1.0)
 set(SHADER_SOURCES
     forward_shading.vert
     forward_shading.frag
-    deferred_shading_p0.vert
-    deferred_shading_p0.frag
-    deferred_shading_p1.vert
-    deferred_shading_p1.frag
+    deferred_shading/p0.vert
+    deferred_shading/p0.frag
+    deferred_shading/p1.vert
+    deferred_shading/p1.frag
     tiled_forward_shading/p0.vert
     tiled_forward_shading/p0.frag
     tiled_forward_shading/p1.comp
