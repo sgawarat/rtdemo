@@ -1,4 +1,5 @@
 #include <rtdemo/application.hpp>
+#include <chrono>
 #ifdef WIN32
 #include <Windows.h>
 #endif
@@ -165,6 +166,42 @@ bool Application::update() {
       }
       ImGui::EndCombo();
     }
+  }
+
+  // FPSを計算して表示する
+  {
+    using namespace std::chrono_literals;
+
+    using Seconds = std::chrono::duration<double>;
+    using Milliseconds = std::chrono::duration<double, std::milli>;
+    using Nanoseconds = std::chrono::duration<double, std::nano>;
+    using Clock = std::chrono::high_resolution_clock;
+
+    // 経過時間を計測する
+    static Nanoseconds elapsed_time;  // 経過時間
+    static auto last_tp = Clock::now();  // 前回計測したときの時間
+    auto now_tp = Clock::now();
+    elapsed_time = std::chrono::duration_cast<Nanoseconds>(now_tp - last_tp);
+    last_tp = now_tp;
+
+    // 平均FPSを計算する
+    static auto checkpoint_tp = Clock::now() + 1s;  // この時刻を超えたら平均を計算する
+    static Nanoseconds sum_elapsed_time;  // 経過時間の合計
+    static size_t elapsed_time_count = 0;  // 合計した経過時間の数
+    static Nanoseconds ave_elapsed_time;  // 平均経過時間
+    static double ave_fps = 0.0;  // 平均FPS
+    sum_elapsed_time += elapsed_time;
+    elapsed_time_count++;
+    if (now_tp >= checkpoint_tp) {
+      ave_elapsed_time = sum_elapsed_time / elapsed_time_count;
+      ave_fps = 1.0 / std::chrono::duration_cast<Seconds>(ave_elapsed_time).count();
+      sum_elapsed_time = {};
+      elapsed_time_count = 0;
+      checkpoint_tp = now_tp + 1s;
+    }
+
+    ImGui::Text("Ave. Time:%5.3lf[ms]", std::chrono::duration_cast<Milliseconds>(ave_elapsed_time));
+    ImGui::Text("Ave. FPS :%5.3lf[fps]", ave_fps);
   }
 
   // 状態を更新する
