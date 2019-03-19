@@ -4,8 +4,8 @@ project(assets VERSION 0.1.0)
 # シェーダのソースファイル名
 # 末尾の.hlslを除いて記述する
 set(SHADER_SOURCES
-    forward_shading.vert
-    forward_shading.frag
+    forward_shading/p0.vert
+    forward_shading/p0.frag
     deferred_shading/p0.vert
     deferred_shading/p0.frag
     deferred_shading/p1.vert

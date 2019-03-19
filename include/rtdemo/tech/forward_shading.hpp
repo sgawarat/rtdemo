@@ -36,8 +36,12 @@ class ForwardShading final : public Technique {
     SPECULAR_POWER,  ///< スペキュラパワー
   };
 
+  struct Constant {
+    Mode mode;
+  };
+
   garie::Program prog_;
-  garie::Buffer ub_;
+  garie::Buffer constant_ub_;
   Mode mode_ = Mode::DEFAULT;
   std::string log_;  // シェーダのエラーログ
 };
