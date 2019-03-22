@@ -1,4 +1,8 @@
-﻿#include <common.hlsli>
+﻿/**
+ * Shadow Mapping - Pass 0: シャドウマップの生成
+ */
+#include <common.hlsli>
+#include <shadow_mapping\\common.hlsli>
 
 // 入力
 struct VSInput {
@@ -16,7 +20,8 @@ struct VSOutput {
 [[vk::binding(0)]] StructuredBuffer<ShadowCaster> SHADOW_CASTERS : register(t0);
 
 void main(in VSInput i, out VSOutput o) {
-    float4 position_c = mul(float4(i.position, 1.f), SHADOW_CASTERS[0].view_proj);
+  const float4x4 view_proj = SHADOW_CASTERS[SHADOW_CASTER_INDEX].view_proj;
+  float4 position_c = mul(float4(i.position, 1.f), view_proj);
 
-    o.position = position_c;
+  o.position = position_c;
 }

@@ -167,7 +167,7 @@ bool StaticScene::restore() {
   shadow_ssbo.gen();
   shadow_ssbo.bind(GL_SHADER_STORAGE_BUFFER);
   glBufferStorage(GL_SHADER_STORAGE_BUFFER,
-                  shadow_casters.size() * sizeof(ShadowCaster), shadow_casters.data(), 0);
+                  shadow_casters.size() * sizeof(ShadowCaster), shadow_casters.data(), GL_MAP_WRITE_BIT);
 
   garie::Buffer dio;
   dio.gen();
@@ -254,6 +254,19 @@ void StaticScene::update() {
     lights[0].radius = light_radius_;
     lights[0].color = glm::vec3(1.f, 1.f, 1.f);
     lights[0].intensity = 1.f;
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+  }
+
+  // シャドウ情報を更新する
+  shadow_ssbo_.bind(GL_SHADER_STORAGE_BUFFER);
+  auto shadow_casters =
+  reinterpret_cast<ShadowCaster*>(glMapBufferRange(
+      GL_SHADER_STORAGE_BUFFER, 0, sizeof(ShadowCaster),
+      GL_MAP_WRITE_BIT));
+  if (shadow_casters) {
+    const glm::mat4 proj = glm::perspective(glm::radians(90.f), 1.f, 0.01f, 100.f);
+    const glm::mat4 view = glm::lookAt(light_position_, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f));
+    shadow_casters[0].view_proj = proj * view;
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
   }
 

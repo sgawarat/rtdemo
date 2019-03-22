@@ -223,6 +223,13 @@ const garie::RasterizationState& discard_rs() {
   return rs;
 }
 
+const garie::RasterizationState& backface_rs() {
+  static auto rs = garie::RasterizationStateBuilder()
+      .front_face(GL_CW)
+      .build();
+  return rs;
+}
+
 const garie::ColorBlendState& default_bs() {
   static garie::ColorBlendState bs;
   return bs;

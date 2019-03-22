@@ -17,10 +17,10 @@ set(SHADER_SOURCES
     tiled_forward_shading/p2.frag
     tiled_forward_shading/p3.vert
     tiled_forward_shading/p3.frag
-    shadow_mapping_p0.vert
-    shadow_mapping_p0.frag
-    shadow_mapping_p1.vert
-    shadow_mapping_p1.frag
+    shadow_mapping/p0.vert
+    shadow_mapping/p0.frag
+    shadow_mapping/p1.vert
+    shadow_mapping/p1.frag
 )
 
 # 使用するツールへのパスを指定する

@@ -29,23 +29,22 @@ class ShadowMapping final : public Technique {
   enum class Mode : int {
     DEFAULT,  ///< 通常
     SHADOWED,  ///< 影付けされた所を色付けする
-    CASTER,  ///< シャドウキャスタの視点
   };
 
   struct Constant {
-    Mode mode;
-    float shadow_bias;
+    uint32_t shadow_caster_index = 0;
+    Mode mode = Mode::DEFAULT;
+    float _pad[2];
   };
 
   garie::Program p0_prog_;  ///< シャドウパスのプログラム
   garie::Program p1_prog_;  ///< シェーディングパスのプログラム
-  garie::Buffer ub_;
+  garie::Buffer constant_ub_;
   garie::Texture depth_tex_;  ///< シャドウマップのテクスチャ
   garie::Framebuffer p0_fbo_;  ///< シャドウパスのフレームバッファ
   garie::Viewport p0_viewport_;  ///< シャドウパスのビューポート
   garie::Sampler ss_;  ///< サンプラ
-  Mode mode_ = Mode::DEFAULT;
-  float shadow_bias_ = 0.05f;
+  Constant constant_;
   std::string log_;  // シェーダのエラーログ
 };
 }  // namespace rtdemo::tech

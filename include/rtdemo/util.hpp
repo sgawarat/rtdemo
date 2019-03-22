@@ -145,6 +145,13 @@ const garie::RasterizationState& default_rs();
 const garie::RasterizationState& discard_rs();
 
 /**
+ * @brief 背面を描画するステート
+ * 
+ * @return const garie::RasterizationState& ステートを返す
+ */
+const garie::RasterizationState& backface_rs();
+
+/**
  * @brief 既定値のステート
  * 
  * @return const garie::ColorBlendState& ステート
