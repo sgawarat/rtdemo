@@ -21,6 +21,10 @@ set(SHADER_SOURCES
     shadow_mapping/p0.frag
     shadow_mapping/p1.vert
     shadow_mapping/p1.frag
+    volumetric_fog/p0.comp
+    volumetric_fog/p1.comp
+    volumetric_fog/p2.vert
+    volumetric_fog/p2.frag
 )
 
 # 使用するツールへのパスを指定する
@@ -46,11 +50,11 @@ if(COMPILE_SHADERS AND DXC_BINARY AND SPIRV_CROSS_BINARY)
         # シェーダプロファイルを調べる
         get_filename_component(SOURCE_EXT ${SHADER_FILE} EXT)
         if(SOURCE_EXT MATCHES "vert")
-            set(SHADER_PROFILE vs_6_0)
+            set(SHADER_PROFILE vs_6_2)
         elseif(SOURCE_EXT MATCHES "frag")
-            set(SHADER_PROFILE ps_6_0)
+            set(SHADER_PROFILE ps_6_2)
         elseif(SOURCE_EXT MATCHES "comp")
-            set(SHADER_PROFILE cs_6_0)
+            set(SHADER_PROFILE cs_6_2)
         else()
             message(FATAL_ERROR "unknown shader profile: ${SOURCE_EXT}")
         endif()
@@ -60,7 +64,7 @@ if(COMPILE_SHADERS AND DXC_BINARY AND SPIRV_CROSS_BINARY)
         set(SHADER_BINARY_GLSL ${SHADER_BINARY_DIR}/${SHADER_FILE})
         add_custom_command(
             OUTPUT ${SHADER_BINARY}
-            COMMAND ${DXC_BINARY} -Zi -Od -Zpr -I . -spirv -T ${SHADER_PROFILE} -E main -Fo ${SHADER_BINARY} ${SHADER_SOURCE}
+            COMMAND ${DXC_BINARY} -Zi -Od -Zpr -I . -spirv -enable-16bit-types -T ${SHADER_PROFILE} -E main -Fo ${SHADER_BINARY} ${SHADER_SOURCE}
             COMMAND ${SPIRV_CROSS_BINARY} --version 450 --combined-samplers-inherit-bindings --output ${SHADER_BINARY_GLSL} ${SHADER_BINARY}
             # COMMAND ${GLSLANGVALIDATOR_BINARY} ${SHADER_BINARY_GLSL}
             WORKING_DIRECTORY ${SHADER_SOURCE_DIR}

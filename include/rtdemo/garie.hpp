@@ -358,6 +358,18 @@ class Texture : public Object<Texture> {
     glBindTexture(target, id());
   }
 
+  void bind_image(GLuint unit, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format) const noexcept {
+    glBindImageTexture(unit, id(), level, layered, layer, access, format);
+  }
+
+  void bind_image(GLuint unit, GLint level, GLenum access, GLenum format) const noexcept {
+    glBindImageTexture(unit, id(), level, GL_TRUE, 0, access, format);
+  }
+
+  void bind_image(GLuint unit, GLenum access, GLenum format) const noexcept {
+    glBindImageTexture(unit, id(), 0, GL_TRUE, 0, access, format);
+  }
+
  private:
   friend class Object<Texture>;
 
