@@ -34,13 +34,18 @@ private:
     DIFFUSE,  ///< ディフューズ
     SPECULAR,  ///< スペキュラ
     SPECULAR_POWER,  ///< スペキュラパワー
-    VOLUMETRICS,  ///< ボリューメトリックライティング
     VTEXCOORD,  ///< Vバッファ用のテクスチャ座標
+    SCATTERING,  ///< 散乱
+    TRANSMITTANCE,  ///< 透過率
   };
 
   struct Constant {
+    uint32_t froxel_count[3];
     Mode mode;
-    float _pad[3];
+    float volume_depth_scale;
+    float volume_depth_offset;
+    float fog_height;
+    float _pad[1];
   };
 
   garie::Program p0_prog_;  // ボリュームのボクセル化
@@ -54,6 +59,9 @@ private:
   uint32_t vbuffer_width_ = 0;
   uint32_t vbuffer_height_ = 0;
   uint32_t vbuffer_depth_ = 0;
+  float volume_depth_scale_ = 1.f;
+  float volume_depth_offset_ = 0.f;
+  float fog_height_ = 1.f;
   std::string log_;  ///< シェーダのエラーログ
 };
 }  // namespace rtdemo::tech

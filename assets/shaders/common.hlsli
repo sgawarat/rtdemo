@@ -6,6 +6,7 @@ struct Camera {
     float4x4 view_proj_inv;
     float4x4 view_inv;
     float4x4 proj_inv;
+    float4 range;  // x:幅、y:高さ、z:ニア面、w:ファー面
     float3 position_w;
 };
 

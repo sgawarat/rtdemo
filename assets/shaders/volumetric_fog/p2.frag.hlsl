@@ -1,15 +1,15 @@
 ﻿/**
  * @brief Volumetric Fog - Pass 2: Rendering
  */
-#include <common.hlsli>
-#include <volumetric_fog\\common.hlsli>
+#include "common.hlsli"
 
 // 入力
 struct PSInput {
   float4 position : SV_Position;
   [[vk::location(0)]] float3 position_w : POSITION_W;
   [[vk::location(1)]] float3 normal_w : NORMAL_W;
-  [[vk::location(2)]] float4 position_c : POSITION_C;
+  [[vk::location(2)]] float3 position_v : POSITION_V;
+  [[vk::location(3)]] float4 position_ch : POSITION_CH;
   // [[vk::location(1)]] uint draw_id : DRAW_ID;
 };
 
@@ -28,15 +28,15 @@ struct PSOutput {
 [[vk::binding(8)]] Texture3D<float4> VLIGHTING : register(t8);
 SamplerState VLIGHTING_SAMPLER : register(s8);
 
-
 void main(in PSInput i, out PSOutput o) {
   // 描画IDが指定するマテリアルを取得する
   const uint resource_index = RESOURCE_INDICES[G.draw_id];
   const Material material = MATERIALS[resource_index];
 
   // ボリューメトリックライティングの結果を取り出す
-  float3 vbuffer_texcoord = i.position_c.xyz / i.position_c.w * float3(0.5f, 0.5f, 0.5f) + float3(0.5f, 0.5f, 0.5f);
-  float4 vlighting = VLIGHTING.Sample(VLIGHTING_SAMPLER, vbuffer_texcoord);
+  float3 position_vol = convert_from_view_to_volume(i.position_v, CAMERA);
+  float3 texcoord_vol = convert_from_position_to_texcoord(position_vol);
+  float4 vlighting = VLIGHTING.Sample(VLIGHTING_SAMPLER, texcoord_vol);
 
   float3 final_color;
   switch (MODE) {
@@ -92,12 +92,16 @@ void main(in PSInput i, out PSOutput o) {
     final_color = float1(log2(material.specular_power) / 10.5f).xxx;
     break;
   }
-  case 7: {  // ボリューメトリックライティング結果
+  case 7: {  // Vバッファ用のテクスチャ座標
+    final_color = texcoord_vol;
+    break;
+  }
+  case 8: {  // 散乱
     final_color = vlighting.rgb;
     break;
   }
-  case 8: {  // Vバッファ用のテクスチャ座標
-    final_color = vbuffer_texcoord;
+  case 9: {  // 透過率
+    final_color = vlighting.a;
     break;
   }
   }

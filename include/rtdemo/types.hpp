@@ -32,6 +32,7 @@ struct Camera {
   glm::mat4 view_proj_inv;  ///< view_projの逆行列
   glm::mat4 view_inv;  ///< viewの逆行列
   glm::mat4 proj_inv;  ///< projの逆行列
+  glm::vec4 range;  ///< x:幅、y:高さ、z:ニア面、w:ファー面
   glm::vec3 position_w;  ///< ワールド座標における位置
   float _position_w;  ///< パッディング
 };
