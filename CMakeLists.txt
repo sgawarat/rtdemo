@@ -27,6 +27,7 @@ add_executable(rendering_techniques
     src/tech/deferred_shading.cpp
     src/tech/tiled_forward_shading.cpp
     src/tech/shadow_mapping.cpp
+    src/tech/volumetric_fog.cpp
 )
 target_compile_features(rendering_techniques PRIVATE
     cxx_std_20

@@ -6,6 +6,7 @@ struct Camera {
     float4x4 view_proj_inv;
     float4x4 view_inv;
     float4x4 proj_inv;
+    float4 range;  // x:幅、y:高さ、z:ニア面、w:ファー面
     float3 position_w;
 };
 
@@ -52,3 +53,9 @@ struct PushConstant {
     uint draw_id;
 };
 [[vk::push_constant]] PushConstant G;
+
+#define M_EPSILON 1e-6
+
+#define M_PI   3.14159265358979
+#define M_2PI  6.28318530717959
+#define M_4PI 12.56637061435917

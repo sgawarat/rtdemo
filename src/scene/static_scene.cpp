@@ -216,7 +216,7 @@ bool StaticScene::invalidate() {
 void StaticScene::update() {
   // 射影行列を計算する
   const glm::mat4 proj =
-      glm::perspective(glm::radians(45.f), 1280.f / 720.f, 0.1f, lens_depth_);
+      glm::perspective(glm::radians(45.f), 1280.f / 720.f, 0.01f, lens_depth_);
 
   // ビュー行列を計算する
   const glm::mat3 rot = glm::yawPitchRoll(camera_yaw_, camera_pitch_, 0.f);
@@ -239,6 +239,7 @@ void StaticScene::update() {
     camera->view_proj_inv = glm::inverse(view_proj);
     camera->view_inv = glm::inverse(view);
     camera->proj_inv = glm::inverse(proj);
+    camera->range = glm::vec4(1280.f, 720.f, 0.01f, lens_depth_);
     camera->position_w = eye;
     glUnmapBuffer(GL_UNIFORM_BUFFER);
   }
