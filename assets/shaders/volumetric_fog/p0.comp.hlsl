@@ -21,15 +21,15 @@ void main(
   uint group_index : SV_GroupIndex  // グループ内で一意な番号
 ) {
   for (uint i = 0; i < 64; i++) {
+    // froxelのIDからワールド空間の位置を計算する
     uint3 vid = uint3(dispatch_thread_id.xy, i);
     float3 texcoord_vol = float3(vid) / float3(FROXEL_COUNT);
     float3 position_vol = convert_from_texcoord_to_position(texcoord_vol);
     float3 position_v = convert_from_volume_to_view(position_vol, CAMERA);
     float3 position_w = mul(float4(position_v, 1.f), CAMERA.view_inv).xyz;
 
-    float3 s = float1(max(0.f, FOG_HEIGHT - position_w.y)).xxx;
-    // float3 s = float1(position_w.y <= 1.f ? 1.f : 0.f).xxx;
-
-    u_vbuffer[vid] = float4(s, 0.f);
+    // 高さフォグっぽいことをする
+    float3 s = float1(saturate(FOG_HEIGHT - position_w.y)).xxx;
+    u_vbuffer[vid] = float4(s * SCATTERING_COEFF, EXTINCTION_COEFF);
   }
 }

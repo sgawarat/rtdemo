@@ -8,23 +8,26 @@ cbuffer SceneConstant : register(b7) {
 // テクニックの定数
 cbuffer TechConstant : register(b15) {
   uint3 FROXEL_COUNT;  // froxelの数
+  float VOLUME_DEPTH_SCALE;  // ボリューム空間の深度にかける倍率
+  float VOLUME_DEPTH_BIAS;  // ボリューム空間の深度に加えるオフセット
+  float FOG_HEIGHT;  // フォグの高さ
+  float3 SCATTERING_COEFF;  // 散乱係数
+  float EXTINCTION_COEFF;  // 消散係数
   int MODE;  // 表示するモード
-  float2 VOLUME_DEPTH_PARAM;  // x:スケール、y:オフセット
-  float FOG_HEIGHT;
 };
 
 // ビュー空間のZ値からボリューム空間のZ値を計算する
 // ニア面が0の近くに、ファー面が1の近くになるようにマッピングされる
 // zは正の値であるとする
 float encode_volume_depth(float z) {
-  return log2(z - VOLUME_DEPTH_PARAM.y) / VOLUME_DEPTH_PARAM.x;
+  return log2(z - VOLUME_DEPTH_BIAS) / VOLUME_DEPTH_SCALE;
 }
 
 // ボリューム空間のZ値からビュー空間のZ値を計算する
 // 0がニア面の近くに、1がファー面の近くになるようにマッピングされる
 // zは[0, 1]の中にあるとする
 float decode_volume_depth(float z) {
-  return pow(2.f, z * VOLUME_DEPTH_PARAM.x) + VOLUME_DEPTH_PARAM.y;
+  return pow(2.f, z * VOLUME_DEPTH_SCALE) + VOLUME_DEPTH_BIAS;
 }
 
 // ボリューム空間の位置をビュー空間の位置に変換する
@@ -53,4 +56,14 @@ float3 convert_from_position_to_texcoord(float3 position) {
 // [0, 1]を[-1, 1]に変換する
 float3 convert_from_texcoord_to_position(float3 texcoord) {
   return texcoord * 2.f - float1(1.f).xxx;
+}
+
+// Henyey-Greensteinの位相関数
+// gは[-1, 1]の範囲で異方性を示すパラメータ
+// cos_thetaは入射光と出射光のなす角のコサイン
+float calc_hg_phase(float g, float cos_theta) {
+  float g2 = g * g;
+  float num = 1 - g2;
+  float denom = pow(1 + g2 - 2 * g * cos_theta, 1.5f);
+  return num / denom / M_4PI;
 }

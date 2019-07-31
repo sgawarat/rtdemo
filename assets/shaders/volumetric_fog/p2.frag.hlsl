@@ -104,6 +104,39 @@ void main(in PSInput i, out PSOutput o) {
     final_color = vlighting.a;
     break;
   }
+  case 10: {  // ボリューメトリックレンダリング付き
+    float3 v = normalize(CAMERA.position_w - i.position_w);
+    float3 n = normalize(i.normal_w);
+
+    final_color = float3(0.f, 0.f, 0.f);//MATERIAL.ambient;
+    for (uint k = 0; k < LIGHT_COUNT; ++k) {
+      const PointLight light = LIGHTS[k];
+
+      const float3 lv = light.position_w - i.position_w;  // シェーディングポイントからライト位置へのベクトル
+      const float l_len = length(lv);  // ライトまでの距離
+      const float3 l = (light.position_w - i.position_w) / l_len;  // ライト方向
+      const float3 r = reflect(-l, n);  // ライト方向の反射ベクトル
+
+      // 減衰率を計算する
+      // TODO:ちゃんとした減衰率を計算する
+      float atten = 1.f;
+      if (l_len >= light.radius) atten = 0.f;
+
+      // Phongっぽく計算する
+      final_color +=
+          (
+              material.diffuse * max(0, dot(n, l))
+              +
+              material.specular * pow(max(0, dot(v, r)), material.specular_power)
+          ) * light.color * light.intensity * atten;
+    }
+
+    // ボリューメトリックライティング結果を反映する
+    final_color *= vlighting.a;
+    final_color += vlighting.rgb;
+
+    break;
+  }
   }
 
   o.frag_color = float4(final_color, 1.f);
