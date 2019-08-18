@@ -62,13 +62,18 @@ if(COMPILE_SHADERS AND DXC_BINARY AND SPIRV_CROSS_BINARY)
         set(SHADER_SOURCE ${SHADER_SOURCE_DIR}/${SHADER_FILE}.hlsl)
         set(SHADER_BINARY ${SHADER_BINARY_DIR}/${SHADER_FILE}.spv)
         set(SHADER_BINARY_GLSL ${SHADER_BINARY_DIR}/${SHADER_FILE})
+        get_filename_component(SHADER_SOURCE_FILE_DIR ${SHADER_SOURCE} DIRECTORY)
+        set(COMMON_SHADER_SOURCES
+            ${SHADER_SOURCE_DIR}/common.hlsli
+            ${SHADER_SOURCE_FILE_DIR}/common.hlsli
+        )
         add_custom_command(
             OUTPUT ${SHADER_BINARY}
             COMMAND ${DXC_BINARY} -Zi -Od -Zpr -I . -spirv -enable-16bit-types -T ${SHADER_PROFILE} -E main -Fo ${SHADER_BINARY} ${SHADER_SOURCE}
             COMMAND ${SPIRV_CROSS_BINARY} --version 450 --combined-samplers-inherit-bindings --output ${SHADER_BINARY_GLSL} ${SHADER_BINARY}
             # COMMAND ${GLSLANGVALIDATOR_BINARY} ${SHADER_BINARY_GLSL}
-            WORKING_DIRECTORY ${SHADER_SOURCE_DIR}
-            DEPENDS ${SHADER_SOURCE})
+            WORKING_DIRECTORY ${SHADER_SOURCE_FILE_DIR}
+            DEPENDS ${SHADER_SOURCE} ${COMMON_SHADER_SOURCES})
         list(APPEND SHADER_BINARIES ${SHADER_BINARY})
     endforeach(SHADER_FILE)
 
