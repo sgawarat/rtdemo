@@ -40,16 +40,33 @@ private:
     VLIGHTING,  ///< ボリューメトリックライティング付き
   };
 
+  /**
+   * @brief フォグの形状
+   */
+  enum class FogShape : int {
+    HIGHT,  // 高さ
+    BOX,  // 箱
+    SPHERE,  // 球
+  };
+
   struct Constant {
     uint32_t froxel_count[3] = {};  // Vバッファの大きさ
+    float _pad0;
+
     float volume_depth_scale = 1.f;  // ボリュームの深度にかけられる倍率
     float volume_depth_offset = 0.f;  // ボリュームの深度に加えられるオフセット
-    float fog_height = 0.f;  // フォグの高さ
-    float _pad0[2];
+    float _pad1[2];
+
     float scattering_coeff[3] = {0.f};  // 散乱係数
     float extinction_coeff = 0.f;  // 消散係数
+
     Mode mode = Mode::DEFAULT;  // 表示モード
-    float _pad[3];
+    FogShape fog_shape;  // フォグの形状
+    float attenuation_coeff;  // 光の減衰に関する係数
+    float _pad3;
+
+    float fog_center[3];  // フォグの中心
+    float fog_radius;  // フォグの半径
   };
 
   garie::Program p0_prog_;  // ボリュームのボクセル化

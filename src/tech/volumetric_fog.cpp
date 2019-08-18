@@ -108,9 +108,12 @@ void VolumetricFog::update_gui() {
   ImGui::Combo("debug view", reinterpret_cast<int*>(&constant_.mode), "Default\0POSITION\0NORMAL\0AMBIENT\0DIFFUSE\0SPECULAR\0SPECULAR_POWER\0VTEXCOORD\0SCATTERING\0TRANSMITTANCE\0VLIGHTING\0");
   ImGui::SliderFloat("depth scale", &constant_.volume_depth_scale, 1.f, 100.f);
   ImGui::SliderFloat("depth offset", &constant_.volume_depth_offset, 0.f, 100.f);
-  ImGui::SliderFloat("fog height", &constant_.fog_height, -10.f, 10.f);
   ImGui::SliderFloat3("sigma_s", constant_.scattering_coeff, 0.f, 1.f);
   ImGui::SliderFloat("sigma_t", &constant_.extinction_coeff, 0.f, 1.f);
+  ImGui::SliderFloat("1/atten", &constant_.attenuation_coeff, 0.f, 100.f);
+  ImGui::Combo("fog shape", reinterpret_cast<int*>(&constant_.fog_shape), "Height\0Box\0Sphere\0");
+  ImGui::SliderFloat("fog radius", &constant_.fog_radius, 0.f, 20.f);
+  ImGui::SliderFloat3("fog center", constant_.fog_center, -10.f, 10.f);
   ImGui::TextWrapped("%s", log_.c_str());
   ImGui::End();
 }
