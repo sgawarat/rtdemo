@@ -8,12 +8,22 @@ cbuffer SceneConstant : register(b7) {
 // テクニックの定数
 cbuffer TechConstant : register(b15) {
   uint3 FROXEL_COUNT;  // froxelの数
+  float _pad0;
+
   float VOLUME_DEPTH_SCALE;  // ボリューム空間の深度にかける倍率
   float VOLUME_DEPTH_BIAS;  // ボリューム空間の深度に加えるオフセット
-  float FOG_HEIGHT;  // フォグの高さ
+  float2 _pad1;
+
   float3 SCATTERING_COEFF;  // 散乱係数
   float EXTINCTION_COEFF;  // 消散係数
+
   int MODE;  // 表示するモード
+  int FOG_SHAPE;  // フォグの形状
+  float ATTEN_Q;  // 光の減衰を制御するパラメータ
+  float _pad3;
+
+  float3 FOG_CENTER;  // フォグの中心
+  float FOG_RADIUS;  // フォグの半径
 };
 
 // ビュー空間のZ値からボリューム空間のZ値を計算する
@@ -21,6 +31,7 @@ cbuffer TechConstant : register(b15) {
 // zは正の値であるとする
 float encode_volume_depth(float z) {
   return log2(z - VOLUME_DEPTH_BIAS) / VOLUME_DEPTH_SCALE;
+  // return z / VOLUME_DEPTH_SCALE;
 }
 
 // ボリューム空間のZ値からビュー空間のZ値を計算する
@@ -28,6 +39,7 @@ float encode_volume_depth(float z) {
 // zは[0, 1]の中にあるとする
 float decode_volume_depth(float z) {
   return pow(2.f, z * VOLUME_DEPTH_SCALE) + VOLUME_DEPTH_BIAS;
+  // return z * VOLUME_DEPTH_SCALE;
 }
 
 // ボリューム空間の位置をビュー空間の位置に変換する
@@ -66,4 +78,15 @@ float calc_hg_phase(float g, float cos_theta) {
   float num = 1 - g2;
   float denom = pow(1 + g2 - 2 * g * cos_theta, 1.5f);
   return num / denom / M_4PI;
+}
+
+// 光の減衰率を計算する
+float calc_attenuation(float dist) {
+  // TODO:最大到達距離をベースにパラメータを決定する？
+  return 1.f / max(1.f, (1.f / ATTEN_Q) * dist * dist);
+}
+
+// シグモイド関数
+float sigmoid(float x) {
+  return 1.f / (1.f + exp(-x));
 }

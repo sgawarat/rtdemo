@@ -251,10 +251,7 @@ void StaticScene::update() {
       GL_SHADER_STORAGE_BUFFER, 0, sizeof(PointLight),
       GL_MAP_WRITE_BIT));
   if (lights) {
-    lights[0].position_w = light_position_;
-    lights[0].radius = light_radius_;
-    lights[0].color = glm::vec3(1.f, 1.f, 1.f);
-    lights[0].intensity = 1.f;
+    lights[0] = light_;
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
   }
 
@@ -266,7 +263,7 @@ void StaticScene::update() {
       GL_MAP_WRITE_BIT));
   if (shadow_casters) {
     const glm::mat4 proj = glm::perspective(glm::radians(90.f), 1.f, 0.01f, 100.f);
-    const glm::mat4 view = glm::lookAt(light_position_, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f));
+    const glm::mat4 view = glm::lookAt(light_.position_w, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f));
     shadow_casters[0].view_proj = proj * view;
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
   }
@@ -290,8 +287,10 @@ void StaticScene::update_gui() {
   ImGui::SliderAngle("yaw", &camera_yaw_, -180.f, 180.f);
   ImGui::SliderAngle("pitch", &camera_pitch_, -90.f, 90.f);
   ImGui::DragFloat("depth", &lens_depth_, 0.01f, 0.01f, 30.f);
-  ImGui::DragFloat3("position", glm::value_ptr(light_position_), 0.1f, -10.f, 10.f);
-  ImGui::SliderFloat("radius", &light_radius_, 0.f, 20.f);
+  ImGui::DragFloat3("position", glm::value_ptr(light_.position_w), 0.1f, -10.f, 10.f);
+  ImGui::SliderFloat("radius", &light_.radius, 0.f, 20.f);
+  ImGui::ColorEdit3("color", glm::value_ptr(light_.color));
+  ImGui::SliderFloat("intensity", &light_.intensity, 0.f, 10.f);
   ImGui::Combo("draw mode", reinterpret_cast<int*>(&draw_mode_),
                "DRAW\0DRAW_INDIRECT\0\0");
   ImGui::End();

@@ -28,8 +28,27 @@ void main(
     float3 position_v = convert_from_volume_to_view(position_vol, CAMERA);
     float3 position_w = mul(float4(position_v, 1.f), CAMERA.view_inv).xyz;
 
-    // 高さフォグっぽいことをする
-    float3 s = float1(saturate(FOG_HEIGHT - position_w.y)).xxx;
-    u_vbuffer[vid] = float4(s * SCATTERING_COEFF, EXTINCTION_COEFF);
+    // 形状に応じたボリュームの密度を測る
+    float3 s = 0.f;
+    const float scale = 3.f;
+    switch (FOG_SHAPE) {
+    case 0: {  // 高さ
+      s = saturate(scale * (FOG_CENTER.y - position_w.y));
+      break;
+    }
+    case 1: {  // 箱
+      const float3 n = (FOG_CENTER - float1(FOG_RADIUS).xxx) - position_w;
+      const float3 p =  position_w - (FOG_CENTER + float1(FOG_RADIUS).xxx);
+      const float3 d = max(0.f, max(p, n));
+      s = 1.f - saturate(scale * length(d));
+      break;
+    }
+    case 2: {  // 球
+      s = saturate(scale * (FOG_RADIUS - distance(position_w, FOG_CENTER)));
+      break;
+    }
+    }
+
+    u_vbuffer[vid] = float4(s * SCATTERING_COEFF, EXTINCTION_COEFF + M_EPSILON);
   }
 }

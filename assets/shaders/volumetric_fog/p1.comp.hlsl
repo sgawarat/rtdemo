@@ -58,10 +58,12 @@ void main(
       const float3 light_position_v = mul(float4(light.position_w, 1.f), CAMERA.view).xyz;
 
       // TODO:減衰を適用したい
+      const float light_distance = length(light_position_v - back_position_v);
       const float3 light_v = normalize(light_position_v - back_position_v);
       const float v_l = dot(view_v, light_v);
       const float phase = calc_hg_phase(0.f, v_l);
-      froxel_in_scattering += phase * light.color;  // TODO:light.colorの単位は？
+      const float atten = calc_attenuation(light_distance);
+      froxel_in_scattering += phase * light.color * light.intensity * atten;  // TODO:light.colorの単位は？
     }
     float3 froxel_scattering = total_transmittance * sigma_s * froxel_in_scattering * (1.f - froxel_transmittance) / (sigma_t + M_EPSILON);
 

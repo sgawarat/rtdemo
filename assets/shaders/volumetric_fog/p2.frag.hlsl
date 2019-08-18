@@ -54,9 +54,7 @@ void main(in PSInput i, out PSOutput o) {
       const float3 r = reflect(-l, n);  // ライト方向の反射ベクトル
 
       // 減衰率を計算する
-      // TODO:ちゃんとした減衰率を計算する
-      float atten = 1.f;
-      if (l_len >= light.radius) atten = 0.f;
+      const float atten = calc_attenuation(l_len);
 
       // Phongっぽく計算する
       final_color +=
@@ -118,9 +116,7 @@ void main(in PSInput i, out PSOutput o) {
       const float3 r = reflect(-l, n);  // ライト方向の反射ベクトル
 
       // 減衰率を計算する
-      // TODO:ちゃんとした減衰率を計算する
-      float atten = 1.f;
-      if (l_len >= light.radius) atten = 0.f;
+      const float atten = calc_attenuation(l_len);
 
       // Phongっぽく計算する
       final_color +=

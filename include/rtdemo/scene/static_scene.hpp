@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <glm/glm.hpp>
+#include <rtdemo/types.hpp>
 #include <rtdemo/garie.hpp>
 #include <rtdemo/scene.hpp>
 
@@ -66,9 +67,13 @@ class StaticScene final : public Scene {
   garie::Buffer material_ssbo_;
   garie::Buffer light_ssbo_;
   garie::Buffer shadow_ssbo_;
+  PointLight light_{
+    glm::vec3(0.f, 3.f, 0.f),
+    7.f,
+    glm::vec3(1.f, 1.f, 1.f),
+    1.f,
+  };
   size_t light_count_ = 0;
-  glm::vec3 light_position_{0.f, 3.f, 0.f};
-  float light_radius_ = 7.f;
   garie::Buffer dio_;  ///< indirect描画コマンドのバッファ
   std::vector<Command> commands_;
 };
