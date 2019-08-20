@@ -29,7 +29,7 @@ void main(
     float3 position_w = mul(float4(position_v, 1.f), CAMERA.view_inv).xyz;
 
     // 形状に応じたボリュームの密度を測る
-    float3 s = 0.f;
+    float s = 0.f;
     const float scale = 3.f;
     switch (FOG_SHAPE) {
     case 0: {  // 高さ
@@ -49,6 +49,6 @@ void main(
     }
     }
 
-    u_vbuffer[vid] = float4(s * SCATTERING_COEFF, EXTINCTION_COEFF + M_EPSILON);
+    u_vbuffer[vid] = s * float4(SCATTERING_COEFF, EXTINCTION_COEFF);
   }
 }

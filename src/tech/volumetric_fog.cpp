@@ -106,10 +106,11 @@ void VolumetricFog::update() {
 void VolumetricFog::update_gui() {
   ImGui::Begin("VolumetricFog");
   ImGui::Combo("debug view", reinterpret_cast<int*>(&constant_.mode), "Default\0POSITION\0NORMAL\0AMBIENT\0DIFFUSE\0SPECULAR\0SPECULAR_POWER\0VTEXCOORD\0SCATTERING\0TRANSMITTANCE\0VLIGHTING\0");
-  ImGui::SliderFloat("depth scale", &constant_.volume_depth_scale, 1.f, 100.f);
-  ImGui::SliderFloat("depth offset", &constant_.volume_depth_offset, 0.f, 100.f);
-  ImGui::SliderFloat3("sigma_s", constant_.scattering_coeff, 0.f, 1.f);
-  ImGui::SliderFloat("sigma_t", &constant_.extinction_coeff, 0.f, 1.f);
+  ImGui::SliderFloat("depth scale", &constant_.volume_depth_scale, 0.f, 30.f);
+  ImGui::SliderFloat("depth offset", &constant_.volume_depth_offset, -10.f, 10.f);
+  ImGui::SliderFloat3("sigma_s", constant_.scattering_coeff, 0.f, 10.f);
+  ImGui::SliderFloat("sigma_a", &absorption_coeff_, 0.f, 10.f);
+  constant_.extinction_coeff = absorption_coeff_ + *std::max_element(constant_.scattering_coeff, constant_.scattering_coeff + 3);
   ImGui::SliderFloat("1/atten", &constant_.attenuation_coeff, 0.f, 100.f);
   ImGui::Combo("fog shape", reinterpret_cast<int*>(&constant_.fog_shape), "Height\0Box\0Sphere\0");
   ImGui::SliderFloat("fog radius", &constant_.fog_radius, 0.f, 20.f);
