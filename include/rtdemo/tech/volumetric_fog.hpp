@@ -67,14 +67,22 @@ private:
 
     float fog_center[3] = {0.f, 2.f, 0.f};  // フォグの中心
     float fog_radius = 3.f;  // フォグの半径
+
+    float shadow_bias = 0.00005f;
+    float _pad5[3];
   };
 
+  garie::Program shadow_prog_;  // シャドウマップの生成
   garie::Program p0_prog_;  // ボリュームのボクセル化
   garie::Program p1_prog_;  // ボリューメトリックライティングの計算
   garie::Program p2_prog_;  // レンダリング
+  garie::Texture shadow_tex_;  // シャドウマップ
   garie::Texture vbuffer_tex_;  // ボリュームの特性を格納する3Dテクスチャ
   garie::Texture lighting_tex_;  // 視点から見たのボリューメトリックライティングの結果を格納する3Dテクスチャ
+  garie::Framebuffer shadow_fb_;  // シャドウマッピング用
+  garie::Viewport shadow_vp_;  // シャドウマッピング用
   garie::Sampler lighting_ss_;  // 3Dテクスチャをサンプルするためのサンプラ
+  garie::Sampler shadow_ss_;  // シャドウマップをサンプルするためのサンプラ
   garie::Buffer constant_ub_;  // 定数用バッファ
   Constant constant_;  // 定数の値
   float absorption_coeff_ = 0.f;
