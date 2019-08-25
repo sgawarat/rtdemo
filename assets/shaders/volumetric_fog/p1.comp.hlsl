@@ -8,6 +8,11 @@
 
 // t
 [[vk::binding(0)]] StructuredBuffer<PointLight> LIGHTS : register(t0);
+[[vk::binding(1)]] StructuredBuffer<ShadowCaster> SHADOW_CASTERS : register(t1);
+[[vk::binding(3)]] Texture2D<float> SHADOW : register(t3);
+
+// s
+[[vk::binding(3)]] SamplerState SHADOW_SAMPLER : register(s3);
 
 // u
 [[vk::binding(4)]] RWTexture3D<float4> VBUFFER : register(u4);  // TODO:読み込み専用にする
@@ -38,6 +43,8 @@ void main(
     const float3 back_texcoord_vol = float3(back_vid) / float3(FROXEL_COUNT);
     const float3 back_position_vol = convert_from_texcoord_to_position(back_texcoord_vol);
     const float3 back_position_v = convert_from_volume_to_view(back_position_vol, CAMERA);
+    const float4 back_position_wh = mul(float4(back_position_v, 1.f), CAMERA.view_inv);
+    const float3 back_position_w = back_position_wh.xyz / back_position_wh.w;
 
     // 必要な値を計算する
     const float froxel_depth = abs(back_position_v.z - front_position_v.z);
@@ -53,18 +60,49 @@ void main(
 
     // froxel内の散乱光を計算する
     float3 froxel_in_scattering = 0.f;
-    for (uint light_index = 0; light_index < LIGHT_COUNT; light_index++) {
+
+    // ディレクショナルライト
+    for (uint light_index = 0; light_index < 1; light_index++) {
       const PointLight light = LIGHTS[light_index];
       const float3 light_position_v = mul(float4(light.position_w, 1.f), CAMERA.view).xyz;
 
-      // TODO:減衰を適用したい
+      // 遮蔽を計算する
+      // TODO:最適なサンプリング方法を考える
+      float visibility = 1.f;
+      if (light_index == 0) {  // TODO:シャドウを持たないライトに対応する
+        const float4 position_sm = mul(float4(back_position_w, 1.f), SHADOW_CASTERS[light_index].view_proj);
+        const float3 shadow_coord = (position_sm.xyz / position_sm.w) * float1(0.5f).xxx + float1(0.5f).xxx;
+        const float shadow_depth = SHADOW.SampleLevel(SHADOW_SAMPLER, shadow_coord.xy, 0.f);
+        if (shadow_depth < (shadow_coord.z - SHADOW_BIAS)) {
+          visibility = 0.f;
+        } else {
+          visibility = 1.f;
+        }
+      }
+
+      // ライティングを計算する
+      const float light_distance = length(light_position_v);
+      const float3 light_v = normalize(light_position_v);
+      const float v_l = dot(view_v, light_v);
+      const float phase = calc_hg_phase(0.f, v_l);
+      const float atten = 1.f;//calc_attenuation(light_distance);
+      froxel_in_scattering += phase * light.color * light.intensity * atten * visibility;
+    }
+
+    // ポイントライト
+    for (; light_index < LIGHT_COUNT; light_index++) {
+      const PointLight light = LIGHTS[light_index];
+      const float3 light_position_v = mul(float4(light.position_w, 1.f), CAMERA.view).xyz;
+
+      // ライティングを計算する
       const float light_distance = length(light_position_v - back_position_v);
       const float3 light_v = normalize(light_position_v - back_position_v);
       const float v_l = dot(view_v, light_v);
       const float phase = calc_hg_phase(0.f, v_l);
       const float atten = calc_attenuation(light_distance);
-      froxel_in_scattering += phase * light.color * light.intensity * atten;  // TODO:light.colorの単位は？
+      froxel_in_scattering += phase * light.color * light.intensity * atten;
     }
+
     float3 froxel_scattering = total_transmittance * sigma_s * froxel_in_scattering * (1.f - froxel_transmittance) / (sigma_t + M_EPSILON);
 
     // 視点からの累計値を計算する

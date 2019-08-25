@@ -24,6 +24,10 @@ cbuffer TechConstant : register(b15) {
 
   float3 FOG_CENTER;  // フォグの中心
   float FOG_RADIUS;  // フォグの半径
+
+  float SHADOW_BIAS;  // シャドウ判定に加えるバイアス
+  float FOG_BOUNDARY;  // フォグの境界部分のスケール
+  // float _pad5[2];
 };
 
 // ビュー空間のZ値からボリューム空間のZ値を計算する

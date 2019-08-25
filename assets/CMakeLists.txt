@@ -21,6 +21,8 @@ set(SHADER_SOURCES
     shadow_mapping/p0.frag
     shadow_mapping/p1.vert
     shadow_mapping/p1.frag
+    volumetric_fog/shadow.vert
+    volumetric_fog/shadow.frag
     volumetric_fog/p0.comp
     volumetric_fog/p1.comp
     volumetric_fog/p2.vert
