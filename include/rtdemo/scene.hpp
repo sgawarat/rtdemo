@@ -51,6 +51,19 @@ enum class ApplyType {
    * }
    */
   SHADOW,
+
+  /**
+   * @brief ライト情報のみ
+   * 
+   * UBO = {
+   *   0: カメラ
+   * }
+   * SSBO = {
+   *   0: ライト
+   *   1: シャドウ
+   * }
+   */
+  LIGHT_SHADOW,
 };
 
 /**

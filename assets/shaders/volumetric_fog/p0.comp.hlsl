@@ -30,7 +30,7 @@ void main(
 
     // 形状に応じたボリュームの密度を測る
     float s = 0.f;
-    const float scale = 3.f;
+    const float scale = FOG_BOUNDARY;
     switch (FOG_SHAPE) {
     case 0: {  // 高さ
       s = saturate(scale * (FOG_CENTER.y - position_w.y));

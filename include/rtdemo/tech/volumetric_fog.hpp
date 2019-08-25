@@ -69,7 +69,8 @@ private:
     float fog_radius = 3.f;  // フォグの半径
 
     float shadow_bias = 0.00005f;
-    float _pad5[3];
+    float fog_boundary = 3.f;
+    float _pad5[2];
   };
 
   garie::Program shadow_prog_;  // シャドウマップの生成

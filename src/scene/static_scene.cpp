@@ -262,7 +262,9 @@ void StaticScene::update() {
       GL_SHADER_STORAGE_BUFFER, 0, sizeof(ShadowCaster),
       GL_MAP_WRITE_BIT));
   if (shadow_casters) {
-    const glm::mat4 proj = glm::perspective(glm::radians(90.f), 1.f, 0.01f, 100.f);
+    // const glm::mat4 proj = glm::perspective(glm::radians(90.f), 1.f, 0.01f, 100.f);
+    // const glm::mat4 view = glm::lookAt(light_.position_w, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f));
+    const glm::mat4 proj = glm::ortho(-10.f, 10.f, -10.f, 10.f, 0.01f, 100.f);
     const glm::mat4 view = glm::lookAt(light_.position_w, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f));
     shadow_casters[0].view_proj = proj * view;
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
@@ -324,6 +326,14 @@ void StaticScene::apply(ApplyType type) {
       constant_ubo_.bind_base(GL_UNIFORM_BUFFER, 7);
 
       shadow_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
+      break;
+    }
+    case ApplyType::LIGHT_SHADOW: {
+      camera_ubo_.bind_base(GL_UNIFORM_BUFFER, 0);
+      constant_ubo_.bind_base(GL_UNIFORM_BUFFER, 7);
+      
+      light_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 0);
+      shadow_ssbo_.bind_base(GL_SHADER_STORAGE_BUFFER, 1);
       break;
     }
   }

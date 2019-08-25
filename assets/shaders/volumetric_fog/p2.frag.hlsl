@@ -59,7 +59,7 @@ void main(in PSInput i, out PSOutput o) {
       const float3 r = reflect(-l, n);  // ライト方向の反射ベクトル
 
       // 減衰率を計算する
-      const float atten = calc_attenuation(l_len);
+      const float atten = 1.f;//calc_attenuation(l_len);
 
       // シャドウを計算する
       float visibility = 1.f;

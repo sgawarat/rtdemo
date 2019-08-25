@@ -16,6 +16,14 @@
   - DXCの`-Zpr`オプションを使ってみる
     - オプションなしだと、GLSLでは`layout(row_major)`が付与される
 
+### コンピュートシェーダ
+
+#### テクスチャをサンプリングできない
+
+- `Sample`ではなく`SampleLevel`を使う
+  - コンピュートシェーダはLODをサポートしていないらしい
+  - 参考：https://devtalk.nvidia.com/default/topic/492974/texture-sampler-in-compute-shader
+
 ### OpenGL
 
 #### 描画

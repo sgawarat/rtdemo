@@ -72,7 +72,7 @@ bool VolumetricFog::restore() {
 
   shadow_tex_.gen();
   shadow_tex_.bind(GL_TEXTURE_2D);
-  glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT32, shadow_width, shadow_height);
+  glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT32F, shadow_width, shadow_height);
 
   vbuffer_tex_.gen();
   vbuffer_tex_.bind(GL_TEXTURE_3D);
@@ -148,6 +148,7 @@ void VolumetricFog::update_gui() {
   ImGui::Combo("fog shape", reinterpret_cast<int*>(&constant_.fog_shape), "Height\0Box\0Sphere\0");
   ImGui::SliderFloat("fog radius", &constant_.fog_radius, 0.f, 20.f);
   ImGui::SliderFloat3("fog center", constant_.fog_center, -10.f, 10.f);
+  ImGui::SliderFloat("fog boundary", &constant_.fog_boundary, 1.f, 20.f);
   ImGui::TextWrapped("%s", log_.c_str());
   ImGui::End();
 }
@@ -199,11 +200,14 @@ void VolumetricFog::apply(Scene& scene) {
 
     // リソースをバインドする
     constant_ub_.bind_base(GL_UNIFORM_BUFFER, 15);
+    // shadow_tex_.bind_image(3, GL_READ_ONLY, GL_R32F);
+    shadow_tex_.active(3, GL_TEXTURE_2D);
+    shadow_ss_.bind(3);
     vbuffer_tex_.bind_image(4, GL_READ_ONLY, GL_RGBA32F);
     lighting_tex_.bind_image(5, GL_WRITE_ONLY, GL_RGBA32F);
 
     // ディスパッチ
-    scene.apply(ApplyType::LIGHT);
+    scene.apply(ApplyType::LIGHT_SHADOW);
     glDispatchCompute(constant_.froxel_count[0] / 8, constant_.froxel_count[1] / 8, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
   }
