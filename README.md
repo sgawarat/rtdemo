@@ -1,5 +1,7 @@
 # rtdemo
 
+[![Build status](https://ci.appveyor.com/api/projects/status/o9v2ysnjq76wr005?svg=true)](https://ci.appveyor.com/project/sgawarat/rtdemo)
+
 ## 概要
 
 OpenGLによるレンダリング技法のデモ
@@ -7,7 +9,9 @@ OpenGLによるレンダリング技法のデモ
 ## ビルド方法
 
 1. vcpkgを使って依存するライブラリをインストールする
-2. CMakeを使ってビルドする
+2. DXCをビルドする
+   - SPIR-V CodeGenを有効にしてビルドする
+3. CMakeを使ってビルドする
 
 ## 依存性
 
@@ -25,6 +29,7 @@ OpenGLによるレンダリング技法のデモ
 
 - [vcpkg](https://github.com/Microsoft/vcpkg)
 - [glslang](https://github.com/KhronosGroup/glslang)
+- [DirectXShaderCompiler](https://github.com/microsoft/DirectXShaderCompiler)
 
 ### リソース
 

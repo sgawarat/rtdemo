@@ -89,7 +89,7 @@ bool StaticScene::restore() {
   // ライトのデータをコピーする
   // TODO:シーンから実際のライトデータをコピーする
   std::vector<PointLight> lights;
-  lights.reserve(32);
+  lights.reserve(10);
   std::mt19937_64 engine;
   std::uniform_real_distribution<float> dist;
   std::uniform_real_distribution<float> dist10(-10.f, 10.f);
@@ -98,7 +98,7 @@ bool StaticScene::restore() {
       {dist10(engine), dist10(engine), dist10(engine)},
       3.f + dist(engine) * 7.f,
       {dist(engine), dist(engine), dist(engine)},
-      1.f,
+      5.f,
     });
   }
 
@@ -264,7 +264,7 @@ void StaticScene::update() {
   if (shadow_casters) {
     // const glm::mat4 proj = glm::perspective(glm::radians(90.f), 1.f, 0.01f, 100.f);
     // const glm::mat4 view = glm::lookAt(light_.position_w, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f));
-    const glm::mat4 proj = glm::ortho(-10.f, 10.f, -10.f, 10.f, 0.01f, 100.f);
+    const glm::mat4 proj = glm::ortho(-25.f, 25.f, -25.f, 25.f, 0.01f, 1000.f);
     const glm::mat4 view = glm::lookAt(light_.position_w, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f));
     shadow_casters[0].view_proj = proj * view;
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);

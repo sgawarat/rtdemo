@@ -165,8 +165,8 @@ void VolumetricFog::apply(Scene& scene) {
 
     //  パイプラインをバインドする
     shadow_prog_.use();
-    util::default_rs().apply();
-    // util::backface_rs().apply();
+    //util::default_rs().apply();
+    util::backface_rs().apply();
     util::default_bs().apply();
     util::depth_test_dss().apply();
 

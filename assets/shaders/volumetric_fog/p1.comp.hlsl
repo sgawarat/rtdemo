@@ -86,6 +86,18 @@ void main(
         froxel_scattering += calc_froxel_scattering(back_position_w, phase, light_radiance, sigma_t, subfroxel_depth, SHADOW_CASTERS[light_index].view_proj);
       }
 
+      // ポイントライトに対する散乱光を計算する
+      for (; light_index < LIGHT_COUNT; light_index++) {
+        const PointLight light = LIGHTS[light_index];
+        const float light_distance = distance(light.position_w, back_position_w);
+        const float3 light_w = normalize(light.position_w - back_position_w);
+        const float v_l = dot(view_w, light_w);
+        const float phase = calc_hg_phase(0.f, v_l);
+        const float3 light_radiance = light.color * light.intensity;
+        const float atten = calc_attenuation(light_distance);
+        froxel_scattering += calc_froxel_scattering(back_position_w, phase, light_radiance, sigma_t, subfroxel_depth, SHADOW_CASTERS[light_index].view_proj) * atten;
+      }
+
       prev_back_position_w = back_position_w;
     }
 
